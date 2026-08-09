@@ -1,4 +1,4 @@
-use crate::panels::{actions, board, dice, end, hand, infos, next_player};
+use crate::panels::{actions, board, dice, end, hand, infos, next_player, message};
 use catan::{
     EdgeId, Game, GameError, Player, PlayerColor, PlayerId, ResourceCounts, Roll, Scenario, Steal,
     TileId, VertexId,
@@ -21,7 +21,7 @@ pub(crate) struct CatanApp {
     game: Game,
     hex_size: f32,
     last_roll: Option<Roll>,
-    message: String,
+    message: Option<(String, f64)>,
     build_mode: BuildMode,
     discard_selection: ResourceCounts,
 }
@@ -51,43 +51,31 @@ impl CatanApp {
             game,
             hex_size: 80.0,
             last_roll: None,
-            message: String::new(),
+            message: None,
             build_mode: BuildMode::None,
             discard_selection: ResourceCounts::default(),
         }
     }
 
-    fn apply(&mut self, action: UiAction) {
+    fn apply(&mut self, action: UiAction, now : f64) {
         let player = self.game.current_player();
         let result = match action {
             UiAction::Roll => {
                 let roll = Roll::random();
                 self.last_roll = Some(roll);
-                self.game.apply_roll(roll).map(|outcome| {
-                    self.message = format!("{outcome:?}");
-                })
+                self.game.apply_roll(roll).map(|_| ())
             }
-            UiAction::NextPlayer => self.game.next_player(),
+            UiAction::NextPlayer => {
+                self.game.next_player()
+            }
             UiAction::BuildSettlement(vertex_id) => {
-                let result = self.game.build_settlement(player, vertex_id);
-                if let Ok(()) = result {
-                    self.build_mode = BuildMode::None;
-                }
-                result
+                self.game.build_settlement(player, vertex_id)
             }
             UiAction::BuildRoad(edge_id) => {
-                let result = self.game.build_road(player, edge_id);
-                if let Ok(()) = result {
-                    self.build_mode = BuildMode::None;
-                }
-                result
+                self.game.build_road(player, edge_id)
             }
             UiAction::UpgradeCity(vertex_id) => {
-                let result = self.game.upgrade_settlement_to_city(player, vertex_id);
-                if let Ok(()) = result {
-                    self.build_mode = BuildMode::None;
-                }
-                result
+                self.game.upgrade_settlement_to_city(player, vertex_id)
             }
             UiAction::MoveRobber(tile_id) => self.game.move_robber(player, tile_id),
             UiAction::Steal(steal_option) => self.game.steal(player, steal_option),
@@ -97,7 +85,9 @@ impl CatanApp {
             }
         };
         if let Err(e) = result {
-            self.message = format!("{e:?}");
+            self.message = Some((format!("{e}"), now));
+        } else {
+            self.build_mode = BuildMode::None;
         }
     }
 }
@@ -124,7 +114,7 @@ impl eframe::App for CatanApp {
         }
 
         infos::show(ui, &self.game);
-        
+
         actions.extend(board::show(
             ui,
             &self.game,
@@ -140,8 +130,10 @@ impl eframe::App for CatanApp {
 
         end::show(ui, &self.game);
 
+        let now = ui.input(|i| i.time);
+        message::show(ui, &self.message);
         for action in actions {
-            self.apply(action);
+            self.apply(action, now);
         }
     }
 }

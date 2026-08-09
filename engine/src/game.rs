@@ -1,50 +1,12 @@
+mod game_error;
+
+pub use game_error::GameError;
+
 use crate::board::BuildingKind;
 use crate::{
-    Board, Building, Cost, EdgeId, InvalidAction, InvalidBoard, Player, PlayerId, Production,
-    ResourceCounts, ResourceError, Roll, Scenario, Steal, Terrain, TileId, VertexId
+    Board, Building, Cost, EdgeId, Player, PlayerId, Production,
+    ResourceCounts, Roll, Scenario, Steal, Terrain, TileId, VertexId
 };
-
-#[derive(Debug, PartialEq)]
-pub enum GameError {
-    BoardInitialization(InvalidBoard),
-    Placement(InvalidAction),
-    Resource(ResourceError),
-    NotEnoughResources,
-    NotYourTurn,
-    GameOver,
-    GameIsStarting,
-    GameIsNotPlaying,
-    WrongRollCount,
-    TiedRolls,
-    NotEnoughPlayers,
-    TooManyPlayers,
-    PlayerNotFound(PlayerId),
-    TurnDrivenByPlacement,
-    InvalidGameStatus,
-    PlayerDontNeedToDiscard,
-    InvalidDiscardCount,
-    UnauthorizedVictim,
-    MustStealSomeone,
-    NoOneToSteal,
-}
-
-impl From<InvalidAction> for GameError {
-    fn from(e: InvalidAction) -> Self {
-        Self::Placement(e)
-    }
-}
-
-impl From<ResourceError> for GameError {
-    fn from(e: ResourceError) -> Self {
-        Self::Resource(e)
-    }
-}
-
-impl From<InvalidBoard> for GameError {
-    fn from(e: InvalidBoard) -> Self {
-        Self::BoardInitialization(e)
-    }
-}
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub(crate) enum StatusKind {
@@ -126,11 +88,11 @@ impl Game {
             })
         }
     }
-    
+
     pub fn players(&self) -> &[Player] {
         &self.players
     }
-    
+
     pub fn turn_order(&self) -> &[PlayerId] {
         &self.turn_order
     }
@@ -555,7 +517,7 @@ impl Game {
 mod tests {
     use super::*;
     use crate::player::PlayerColor;
-    use crate::{Building, NumberToken, ResourceCounts, Tile};
+    use crate::{Building, InvalidAction, InvalidBoard, NumberToken, ResourceCounts, ResourceError, Tile};
 
     #[test]
     fn init_game() {
