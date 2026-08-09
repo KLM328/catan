@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["engine", "client"]
+members = ["engine", "client", "protocol"]
 
 [workspace.package]
 version = "0.1.0"
@@ -10,3 +10,5 @@ authors = ["Quentin"]
 [workspace.dependencies]
 rand = "0.10.2"
 catan = { path = "engine" }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"

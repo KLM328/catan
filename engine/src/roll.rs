@@ -1,7 +1,9 @@
 use std::fmt;
 use rand::RngExt;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+
 pub struct InvalidDices(pub u8, pub u8);
 
 impl fmt::Display for InvalidDices {
@@ -11,12 +13,29 @@ impl fmt::Display for InvalidDices {
 }
 impl std::error::Error for InvalidDices {}
 
-#[derive(Debug, Clone, Copy)]
 
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(try_from = "(u8, u8)", into = "(u8, u8)")]
 pub struct Roll {
     dice1: u8,
     dice2: u8,
 }
+
+impl TryFrom<(u8, u8)> for Roll {
+    type Error = InvalidDices;
+
+    fn try_from(value: (u8, u8)) -> Result<Self, Self::Error> {
+        Roll::new(value.0, value.1)
+    }
+}
+
+impl From<Roll> for (u8, u8) {
+    fn from(value: Roll) -> Self {
+        (value.dice1, value.dice2)
+    }
+}
+
 impl Roll {
     pub(crate) fn value(self) -> u8 {
         self.dice1 + self.dice2
@@ -72,5 +91,27 @@ mod tests {
         assert!(Roll::new(13, 13).is_err());
     }
 
+    #[test]
+    fn test_roll_serialization() {
+        for i in 1..=6 {
+            for j in 1..=6 {
+                let roll = Roll::new(i, j).unwrap();
+                let json = serde_json::to_string(&roll).unwrap();
+                println!("{}", json);
+                let back: Roll = serde_json::from_str(&json).unwrap();
+                assert_eq!(roll, back);
+            }
+        }
+
+    }
+
+    #[test]
+    fn test_roll_deserialization_reject_invalid_dice_rolls() {
+        assert!(serde_json::from_str::<Roll>("(1, 0)").is_err());
+        assert!(serde_json::from_str::<Roll>("(0, 1)").is_err());
+
+        assert!(serde_json::from_str::<Roll>("(3, 7)").is_err());
+        assert!(serde_json::from_str::<Roll>("(7, 3)").is_err());
+    }
 
 }

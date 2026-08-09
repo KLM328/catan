@@ -1,6 +1,7 @@
+use serde::{Deserialize, Serialize};
 use crate::Resource;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct ResourceCounts([u8; 5]);
 
 impl ResourceCounts {
@@ -92,6 +93,14 @@ mod tests {
         assert_eq!(resources.get_resource(1), ResourceCounts::new([0,0,1,0,0]));
         assert_eq!(resources.get_resource(2), ResourceCounts::new([0,0,1,0,0]));
         assert_eq!(resources.get_resource(8), ResourceCounts::new([0,1,0,0,0]));
+    }
+
+    #[test]
+    fn test_resource_serialization() {
+        let resources = ResourceCounts([0,1,2,5,0]);
+        let json = serde_json::to_string(&resources).unwrap();
+        let back: ResourceCounts = serde_json::from_str(&json).unwrap();
+        assert_eq!(resources, back);
     }
 
 

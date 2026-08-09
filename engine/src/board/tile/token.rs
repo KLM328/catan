@@ -1,11 +1,20 @@
 use std::fmt;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(try_from = "u8")]
 pub struct NumberToken(u8);
 
 // board/tile/token.rs
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct InvalidNumberToken(pub u8);
+
+impl TryFrom<u8> for NumberToken {
+    type Error = InvalidNumberToken;
+    fn try_from(value: u8) -> Result<Self, InvalidNumberToken> {
+        NumberToken::new(value)
+    }
+}
 
 impl fmt::Display for InvalidNumberToken {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -51,5 +60,26 @@ mod tests {
         assert!(NumberToken::new(1).is_err());
         assert!(NumberToken::new(7).is_err());
         assert!(NumberToken::new(13).is_err());
+    }
+
+    #[test]
+    fn seven_is_rejected_by_deserialization() {
+        assert!(serde_json::from_str::<NumberToken>("7").is_err());
+    }
+
+    #[test]
+    fn one_and_thirteen_are_rejected_by_deserialization() {
+        assert!(serde_json::from_str::<NumberToken>("1").is_err());
+        assert!(serde_json::from_str::<NumberToken>("13").is_err());
+    }
+
+    #[test]
+    fn test_number_token_roundtrip(){
+        for n in (2..=6).chain(8..=12){
+            let n = NumberToken::new(n).unwrap();
+            let json = serde_json::to_string(&n).unwrap();
+            let back = serde_json::from_str(&json).unwrap();
+            assert_eq!(n, back);
+        }
     }
 }
