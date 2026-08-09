@@ -1,14 +1,12 @@
 use eframe::egui;
 use eframe::egui::{Align2, Ui};
 use catan::{Cost, Game, GameStatus};
-use crate::panels::board::BuildMode;
-use crate::theme::player_color;
-use crate::widgets::action_button;
+use crate::{action_button, player_color, theme, BuildMode};
 
 pub(crate) fn show(ui : &mut Ui, game : &Game, build_mode: &mut BuildMode) {
 
     egui::Area::new(egui::Id::new("actions"))
-        .anchor(Align2::RIGHT_BOTTOM, egui::vec2(-542.0, -24.0))
+        .anchor(Align2::RIGHT_BOTTOM, egui::vec2(-theme::SIDE_PANEL_W - theme::BUTTON_W_H * 2.0 - 42.0, -24.0))
         .show(ui.ctx(), |ui| match game.status() {
             GameStatus::PlayingActions => {
                 let player = game.get_player(game.current_player()).unwrap();

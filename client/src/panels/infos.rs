@@ -1,10 +1,10 @@
-use crate::widgets::player_row;
 use catan::Game;
 use eframe::egui;
 use eframe::egui::Ui;
+use crate::{theme, player_row};
 
 pub(crate) fn show(ui: &mut Ui, game: &Game) {
-    egui::Panel::right("info").exact_size(300.0).show(ui, |ui| {
+    egui::Panel::right("info").exact_size(theme::SIDE_PANEL_W).show(ui, |ui| {
         ui.add_space(12.0);
 
         ui.heading("Joueurs");

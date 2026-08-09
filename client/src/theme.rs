@@ -8,6 +8,8 @@ pub(crate) const CARD_H: f32 = 155.0;
 pub(crate) const GAP: f32 = 10.0;
 pub(crate) const SIDE_PANEL_W: f32 = 300.0;
 
+pub(crate) const BUTTON_W_H : f32 = 100.0;
+
 pub(crate) fn resource_color(r: Resource) -> Color32 {
     match r {
         Resource::Wood => terrain_color(Terrain::Forest),

@@ -1,9 +1,7 @@
 use eframe::egui;
-use eframe::egui::{Align2, Color32, FontId, Sense, Stroke, Ui};
+use eframe::egui::{Align2, Color32, Sense, Stroke, Ui};
 use catan::{Game, GameStatus, PlayerColor, PlayerId, Resource, ResourceCounts};
-use crate::theme::{player_color, resource_color, CARD_H, CARD_W, GAP};
-use crate::{theme, UiAction};
-use crate::widgets::{badge, card};
+use crate::{theme, UiAction, player_color, resource_color, badge, card};
 
 pub(crate) fn show(ui: &mut Ui, game: &Game, selection: &mut ResourceCounts) -> Vec<UiAction>{
 
@@ -44,15 +42,15 @@ pub(crate) fn show(ui: &mut Ui, game: &Game, selection: &mut ResourceCounts) -> 
                 ui.add_space(6.0);
 
                 ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x = GAP;
+                    ui.spacing_mut().item_spacing.x = theme::GAP;
                     for &resource in Resource::ALL.iter() {
                         let (card_rect, response) =
-                            ui.allocate_exact_size(egui::vec2(CARD_W, CARD_H), Sense::click());
+                            ui.allocate_exact_size(egui::vec2(theme::CARD_W, theme::CARD_H), Sense::click());
                         let painter = ui.painter_at(card_rect);
                         let count = hand.amount(resource);
                         let card_rect = egui::Rect::from_min_size(
                             egui::pos2(card_rect.left(), card_rect.top()),
-                            egui::vec2(CARD_W, CARD_H),
+                            egui::vec2(theme::CARD_W, theme::CARD_H),
                         );
                         let color = resource_color(resource);
 
@@ -77,7 +75,7 @@ pub(crate) fn show(ui: &mut Ui, game: &Game, selection: &mut ResourceCounts) -> 
                                 // La part défaussée s'efface : on voit ce qu'on va perdre.
                                 let lost = card_rect.height() * selected as f32 / count.max(1) as f32;
                                 painter.rect_filled(
-                                    egui::Rect::from_min_size(card_rect.left_top(), egui::vec2(CARD_W, lost)),
+                                    egui::Rect::from_min_size(card_rect.left_top(), egui::vec2(theme::CARD_W, lost)),
                                     5.0,
                                     Color32::from_black_alpha(170),
                                 );

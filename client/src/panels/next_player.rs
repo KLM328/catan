@@ -1,6 +1,4 @@
-use crate::UiAction;
-use crate::hand_over_button;
-use crate::player_color;
+use crate::{theme, UiAction, hand_over_button, player_color};
 use catan::{Game, GameStatus};
 use eframe::egui;
 use eframe::egui::{Align2, Ui};
@@ -9,7 +7,7 @@ pub(crate) fn show(ui: &mut Ui, game: &Game) -> Vec<UiAction> {
     let mut actions = Vec::new();
 
     egui::Area::new(egui::Id::new("next_player"))
-        .anchor(Align2::RIGHT_TOP, egui::vec2(-324.0, 24.0))
+        .anchor(Align2::RIGHT_TOP, egui::vec2(- theme::SIDE_PANEL_W -24.0, 24.0))
         .show(ui.ctx(), |ui| {
             if let GameStatus::PlayingActions = game.status() {
                 let next_player = game.get_player(game.get_next_player()).unwrap();

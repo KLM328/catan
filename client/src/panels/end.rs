@@ -1,11 +1,8 @@
-use crate::cell;
-use crate::theme::player_color;
+use crate::{cell, player_disc, player_color};
 use catan::{BuildingKind, Game, GameStatus, Player, PlayerColor, PlayerId};
 use eframe::egui;
-use eframe::egui::{Color32, Sense, Stroke, Ui};
+use eframe::egui::{Color32, Sense, Ui};
 use std::cmp::Reverse;
-use crate::widgets::player_disc;
-
 pub(crate) fn show(ui: &mut Ui, game: &Game) {
     const WIDTH: f32 = 700.0;
     const COL: usize = 6;

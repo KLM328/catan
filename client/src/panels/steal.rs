@@ -2,8 +2,7 @@ use eframe::egui;
 use eframe::egui::Ui;
 use catan::{Game, GameStatus, PlayerColor, PlayerId, Steal};
 use crate::UiAction;
-use crate::theme::player_color;
-use crate::widgets::disc_button;
+use crate::{player_color, disc_button};
 
 #[derive(PartialEq, Clone, Copy)]
 pub(crate) enum StealChoice {

@@ -1,5 +1,4 @@
-use crate::widgets::draw_die;
-use crate::UiAction;
+use crate::{draw_die, theme, UiAction};
 use catan::{Game, GameStatus, Roll};
 use eframe::egui;
 use eframe::egui::{Align2, Color32, Sense, Ui};
@@ -8,14 +7,14 @@ pub(crate) fn show(ui: &mut Ui, game: &Game, last_roll: &mut Option<Roll>) -> Ve
     let mut actions = Vec::new();
 
     egui::Area::new(egui::Id::new("dices"))
-        .anchor(Align2::RIGHT_BOTTOM, egui::vec2(-324.0, -24.0))
+        .anchor(Align2::RIGHT_BOTTOM, egui::vec2(-theme::SIDE_PANEL_W -24.0, -24.0))
         .show(ui.ctx(), |ui| {
             let base = match game.status() {
-                GameStatus::AwaitingRoll => 120.0,
+                GameStatus::AwaitingRoll => theme::BUTTON_W_H * 1.2,
                 GameStatus::AwaitingSteal
                 | GameStatus::AwaitingDiscard { .. }
                 | GameStatus::PlayingActions
-                | GameStatus::AwaitingNewRobberLocation => 100.0,
+                | GameStatus::AwaitingNewRobberLocation => theme::BUTTON_W_H,
                 _ => 0.0,
             };
 

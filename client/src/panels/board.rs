@@ -1,10 +1,8 @@
 use eframe::egui;
 use eframe::egui::{Align2, Color32, FontId, Pos2, Sense, Shape, Stroke, Ui};
 use catan::{BuildingKind, EdgeId, Game, GameStatus, Layout, TileId, VertexId};
-use crate::panels::{actions, steal};
-use crate::theme::{player_color, terrain_color};
-use crate::UiAction;
-
+use crate::panels::steal;
+use crate::{player_color, terrain_color, UiAction};
 #[derive(PartialEq, Clone, Copy)]
 pub(crate) enum BuildMode {
     None,

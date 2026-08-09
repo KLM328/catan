@@ -1,5 +1,5 @@
 use eframe::egui;
-use eframe::egui::{Color32, FontId, Sense, Stroke};
+use eframe::egui::{Color32, FontId, Sense};
 use crate::widgets::player_disc;
 
 pub(crate) fn hand_over_button(ui: &mut egui::Ui, next: Color32, name: &str) -> egui::Response {
@@ -41,7 +41,7 @@ pub(crate) fn hand_over_button(ui: &mut egui::Ui, next: Color32, name: &str) -> 
         rect.right() - PAD - RADIUS - SLIDE + SLIDE * t,
         rect.center().y,
     );
-    
+
     player_disc(&painter, c, RADIUS, next);
 
     response

@@ -2,6 +2,7 @@ use eframe::egui;
 use eframe::egui::{Color32, Sense, Stroke};
 use catan::{Cost, Resource};
 use crate::panels::board::BuildMode;
+use crate::theme;
 use crate::theme::resource_color;
 
 pub(crate) fn action_button(
@@ -12,7 +13,7 @@ pub(crate) fn action_button(
     affordable: bool,
     color: Color32,
 ) -> egui::Response {
-    const S: f32 = 100.0;
+    const S: f32 = theme::BUTTON_W_H;
     let (rect, response) = ui.allocate_exact_size(egui::vec2(S, S + 18.0), Sense::click());
     let t = ui
         .ctx()
