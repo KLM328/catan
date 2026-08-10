@@ -1,7 +1,8 @@
 use crate::{Board, InvalidBoard, NumberToken, Terrain, TileId, Topology};
 use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct Scenario {
     topology: Topology,
     terrain_bag: Vec<Terrain>,

@@ -1,5 +1,6 @@
 #[cfg(test)]
 use std::fmt;
+use serde::{Deserialize, Serialize};
 use crate::geometry::{HexDirection, DIRS};
 
 
@@ -36,7 +37,7 @@ impl HexCorner {
     }
 }
 
-#[derive(Eq, Hash, PartialEq, Debug, Clone, Copy, Ord, PartialOrd,)]
+#[derive(Eq, Hash, PartialEq, Debug, Clone, Copy, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct Hex {
     q: i8,
     r: i8,

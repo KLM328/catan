@@ -1,6 +1,7 @@
 mod token;
 
 use std::fmt;
+use serde::{Deserialize, Serialize};
 pub use token::NumberToken;
 use crate::resource::Resource;
 
@@ -21,7 +22,7 @@ impl fmt::Display for TerrainTokenMismatch {
 impl std::error::Error for TerrainTokenMismatch {}
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Terrain { Desert, Forest, Mountain, Hills, Pasture, Fields }
 
 impl Terrain {
@@ -52,7 +53,7 @@ impl Terrain {
 }
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Tile {
     Desert,
     Forest(NumberToken),

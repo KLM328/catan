@@ -1,6 +1,7 @@
+use serde::{Deserialize, Serialize};
 use crate::Topology;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TileId(usize);
 
 impl TileId {
@@ -11,7 +12,7 @@ impl TileId {
         self.0
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct VertexId(usize);
 
 impl VertexId {
@@ -24,7 +25,7 @@ impl VertexId {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct EdgeId(usize);
 
 impl EdgeId {

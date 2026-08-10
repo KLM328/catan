@@ -1,12 +1,13 @@
 use std::cmp::PartialEq;
 use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
 use crate::geometry::{Hex, HexCorner, HexDirection};
 use crate::{EdgeId, VertexId};
 
 #[cfg(test)]
 use crate::TileId;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Topology{
     hexes: Vec<Hex>,
     tile_vertices: Vec<[VertexId; 6]>,

@@ -1,20 +1,21 @@
+use serde::{Deserialize, Serialize};
 use crate::player::PlayerId;
 use crate::ResourceCounts;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Gain {
     pub player: PlayerId,
     pub resources: ResourceCounts
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct Production {
     gains: Vec<Gain>,
 }
 
 impl Production {
-    #[cfg(test)]
-    pub(crate) fn new(entries: &[(PlayerId, [u8; 5])]) -> Self {
+
+    pub fn new(entries: &[(PlayerId, [u8; 5])]) -> Self {
         let mut production = Self::default();
         for &(player, counts) in entries {
             production.add_gain(Gain { player, resources: ResourceCounts::new(counts)});

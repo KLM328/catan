@@ -1,6 +1,7 @@
+use serde::{Deserialize, Serialize};
 use crate::{Hand, ResourceError, ResourceCounts};
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub enum PlayerColor {
     Red,
     Blue,
@@ -19,7 +20,7 @@ impl PlayerColor {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PlayerId(usize);
 impl PlayerId {
     pub fn new(id: usize) -> Self {

@@ -1,5 +1,6 @@
 mod game_error;
 
+use serde::{Deserialize, Serialize};
 pub use game_error::GameError;
 
 use crate::board::BuildingKind;
@@ -23,7 +24,7 @@ pub(crate) enum StatusKind {
     End,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum GameStatus {
     Starting,
     FirstPlacementSettlement,
@@ -65,7 +66,7 @@ pub struct Game {
     board: Option<Board>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RollOutcome {
     Production(Production),
     RobberActivated { must_discard: [u8; 6] },

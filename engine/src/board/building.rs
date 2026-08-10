@@ -1,10 +1,11 @@
+use serde::{Deserialize, Serialize};
 use crate::player::PlayerId;
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 
 pub struct Building { kind: BuildingKind, owner: PlayerId }
 
 impl Building {
-    pub(crate) fn new(kind: BuildingKind, owner: PlayerId) -> Self {
+    pub fn new(kind: BuildingKind, owner: PlayerId) -> Self {
         Self { kind, owner }
     }
     
@@ -12,8 +13,7 @@ impl Building {
 
     pub fn owner(&self) -> PlayerId { self.owner }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum BuildingKind { Settlement, City }
 
 impl BuildingKind {

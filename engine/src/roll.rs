@@ -41,7 +41,7 @@ impl Roll {
         self.dice1 + self.dice2
     }
 
-    pub(crate) fn new(dice1: u8, dice2: u8) -> Result<Self, InvalidDices> {
+    pub fn new(dice1: u8, dice2: u8) -> Result<Self, InvalidDices> {
         if matches!(dice1, 1..=6) && matches!(dice2, 1..=6) {
             Ok(Self { dice1, dice2 })
         } else {

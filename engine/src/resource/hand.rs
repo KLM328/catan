@@ -1,4 +1,5 @@
 use std::fmt;
+use serde::{Deserialize, Serialize};
 use crate::{Cost, Resource};
 use crate::resource::counts::ResourceCounts;
 
@@ -18,7 +19,7 @@ impl fmt::Display for ResourceError {
 }
 impl std::error::Error for ResourceError {}
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct Hand(ResourceCounts);
 
 impl Hand {
