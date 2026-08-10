@@ -97,6 +97,13 @@ impl Game {
         &self.turn_order
     }
 
+    pub fn scenario(&self) -> &Scenario {
+        &self.scenario
+    }
+    
+    pub fn current_player_index(&self) -> usize {
+        self.current_turn
+    }
 
     pub fn board(&self) -> Result<&Board, GameError> {
         self.board.as_ref().ok_or(GameError::GameIsStarting)

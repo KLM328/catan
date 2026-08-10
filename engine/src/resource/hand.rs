@@ -18,7 +18,7 @@ impl fmt::Display for ResourceError {
 }
 impl std::error::Error for ResourceError {}
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Hand(ResourceCounts);
 
 impl Hand {
