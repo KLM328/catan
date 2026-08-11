@@ -31,15 +31,12 @@ impl CatanApp {
         let scenario = Scenario::standard();
         let terrains = scenario.terrains().to_vec();
 
-        let mut game = Game::new(
-            scenario,
-            vec![
-                Player::new(PlayerColor::Orange),
-                Player::new(PlayerColor::Red),
-                Player::new(PlayerColor::White),
-            ],
-        )
-        .expect("création de la partie");
+        let mut game = Game::new(scenario);
+
+        game.add_player(Player::new(PlayerColor::Red)).unwrap();
+        game.add_player(Player::new(PlayerColor::White)).unwrap();
+        game.add_player(Player::new(PlayerColor::Brown)).unwrap();
+
 
         while let Err(GameError::TiedRolls) =
             game.set_players_order(vec![Roll::random(), Roll::random(), Roll::random()])
