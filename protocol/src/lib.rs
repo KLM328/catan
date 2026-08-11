@@ -1,7 +1,4 @@
-use catan::{
-    Building, EdgeId, Game, GameStatus, Hand, PlayerColor, PlayerId, Resource, ResourceCounts,
-    Roll, RollOutcome, Scenario, Tile, TileId, VertexId,
-};
+use catan::{Building, EdgeId, Game, GameError, GameStatus, Hand, PlayerColor, PlayerId, Resource, ResourceCounts, Roll, RollOutcome, Scenario, Tile, TileId, VertexId};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -62,6 +59,7 @@ pub enum ServerMessage {
         scenario: Scenario,
     },
     StartGame,
+    Error(String),
 }
 
 impl From<(&Game, PlayerId)> for ServerMessage {
@@ -104,6 +102,12 @@ impl From<(&Game, PlayerId)> for ServerMessage {
                 }
             }
         }
+    }
+}
+
+impl From<GameError> for ServerMessage {
+    fn from(error: GameError) -> Self {
+        ServerMessage::Error(error.to_string())
     }
 }
 

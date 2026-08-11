@@ -10,5 +10,6 @@ authors = ["Quentin"]
 [workspace.dependencies]
 rand = "0.10.2"
 catan = { path = "engine" }
+catan-protocol = {path = "protocol"}
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
