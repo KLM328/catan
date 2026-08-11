@@ -1,16 +1,20 @@
-use crate::dispatch::{apply};
+use crate::dispatch::apply;
 use crate::state::GameState;
 use catan::{Player, PlayerId};
 use catan_protocol::{ClientMessage, ServerMessage};
 use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
-use tokio::net::tcp::OwnedWriteHalf;
 use tokio::net::TcpStream;
+use tokio::net::tcp::OwnedWriteHalf;
 use tokio::spawn;
 use tokio::sync::mpsc;
-use tokio::sync::mpsc::Receiver;
+use tokio::sync::mpsc::{Receiver, Sender};
 
-pub(crate) async fn handle(socket: TcpStream, addr: std::net::SocketAddr, game_state: Arc<Mutex<GameState>>) {
+pub(crate) async fn handle(
+    socket: TcpStream,
+    addr: std::net::SocketAddr,
+    game_state: Arc<Mutex<GameState>>,
+) {
     let (reader, mut writer) = socket.into_split();
     let mut buf_reader = BufReader::take(BufReader::new(reader), 2048);
     let mut line = String::new();
@@ -42,8 +46,10 @@ pub(crate) async fn handle(socket: TcpStream, addr: std::net::SocketAddr, game_s
 
     let (tx, msg) = {
         let g = game_state.lock().unwrap();
-        (g.senders().get(&player_id).unwrap().clone(),
-         ServerMessage::from((g.game(), player_id)))
+        (
+            g.senders().get(&player_id).unwrap().clone(),
+            ServerMessage::from((g.game(), player_id)),
+        )
     };
     tx.send(msg).await.unwrap();
 
@@ -55,17 +61,28 @@ pub(crate) async fn handle(socket: TcpStream, addr: std::net::SocketAddr, game_s
                 return;
             }
             Ok(_) => {
-                let message = serde_json::from_str::<ClientMessage>(&line).unwrap();
-                let messages = {
-                    let mut g = game_state.lock().unwrap();
-                    apply(&mut g, player_id, message)
-                };
-                for (id, msg) in messages {
-                    let sender = {let g = game_state.lock().unwrap();
-                    g.senders().get(&id).unwrap().clone()};
-                    
-                    sender.send(msg).await.unwrap();}
+                let message = serde_json::from_str::<ClientMessage>(&line);
+                match message {
+                    Ok(message) => {
+                        let outgoing: Vec<(Sender<ServerMessage>, ServerMessage)> = {
+                            let mut g = game_state.lock().unwrap();
+                            apply(&mut g, player_id, message)
+                                .into_iter()
+                                .filter_map(|(id, msg)| g.senders().get(&id).map(|tx| (tx.clone(), msg)))
+                                .collect()
+                        };
+
+                        for (tx, msg) in outgoing {
+                            let _ = tx.send(msg).await;
+                        }
+                    }
+                    Err(_) => {
+                        let msg = ServerMessage::Error("On attend un message de type ClientMessage".to_string());
+                        let _ = tx.send(msg).await;
+                    }
                 }
+
+            }
             Err(e) => {
                 eprintln!("Erreur de lecture depuis {addr} : {e}");
                 return;
@@ -73,7 +90,6 @@ pub(crate) async fn handle(socket: TcpStream, addr: std::net::SocketAddr, game_s
         }
     }
 }
-
 
 async fn join_phase(
     line: &String,
@@ -90,16 +106,15 @@ async fn join_phase(
 
             if let Ok(player_id) = player_result {
                 let (tx, rx) = mpsc::channel(32);
-                {let mut g = game_state.lock().unwrap();
-                    g.senders_mut().insert(player_id, tx);}
+                {
+                    let mut g = game_state.lock().unwrap();
+                    g.senders_mut().insert(player_id, tx);
+                }
                 Some((player_id, rx))
             } else {
                 let msg = ServerMessage::from(player_result.unwrap_err());
                 let json = serde_json::to_string(&msg).unwrap();
-                writer
-                    .write_all(json.as_bytes())
-                    .await
-                    .unwrap();
+                writer.write_all(json.as_bytes()).await.unwrap();
                 None
             }
         }
@@ -107,10 +122,7 @@ async fn join_phase(
         _ => {
             let msg = ServerMessage::Error("On attend un message de type Join".to_string());
             let json = serde_json::to_string(&msg).unwrap();
-            writer
-                .write_all(json.as_bytes())
-                .await
-                .unwrap();
+            writer.write_all(json.as_bytes()).await.unwrap();
             None
         }
     }
