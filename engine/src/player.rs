@@ -22,6 +22,8 @@ impl PlayerColor {
             PlayerColor::Brown => {"Marron"}
         }
     }
+    
+    pub const ALL : [Self; 6] = [Self::Red, Self::Blue, Self::White, Self::Orange, Self::Green, Self::Brown];
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -36,6 +38,7 @@ impl PlayerId {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct Player {
     color: PlayerColor,
     hand: Hand,

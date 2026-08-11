@@ -60,10 +60,10 @@ impl CatanApp {
             UiAction::Roll => {
                 let roll = Roll::random();
                 self.last_roll = Some(roll);
-                self.game.apply_roll(roll).map(|_| ())
+                self.game.apply_roll(self.game.current_player(), roll).map(|_| ())
             }
             UiAction::NextPlayer => {
-                self.game.next_player()
+                self.game.next_player(self.game.current_player())
             }
             UiAction::BuildSettlement(vertex_id) => {
                 self.game.build_settlement(player, vertex_id)
