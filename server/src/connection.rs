@@ -1,4 +1,4 @@
-use crate::dispatch::dispatch;
+use crate::dispatch::{apply};
 use crate::state::GameState;
 use catan::{Player, PlayerId};
 use catan_protocol::{ClientMessage, ServerMessage};
@@ -55,7 +55,12 @@ pub(crate) async fn handle(socket: TcpStream, addr: std::net::SocketAddr, game_s
                 return;
             }
             Ok(_) => {
-                for (id, msg) in dispatch(&line, player_id, &game_state).await {
+                let message = serde_json::from_str::<ClientMessage>(&line).unwrap();
+                let messages = {
+                    let mut g = game_state.lock().unwrap();
+                    apply(&mut g, player_id, message)
+                };
+                for (id, msg) in messages {
                     let sender = {let g = game_state.lock().unwrap();
                     g.senders().get(&id).unwrap().clone()};
                     
