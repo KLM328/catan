@@ -26,6 +26,8 @@ pub(crate) fn player_color(player: &Player) -> Color32 {
         PlayerColor::Red => Color32::from_rgb(185, 5, 20),
         PlayerColor::White => Color32::from_rgb(255, 255, 210),
         PlayerColor::Orange => Color32::from_rgb(255, 110, 0),
+        PlayerColor::Green => Color32::from_rgb(0, 153, 0),
+        PlayerColor::Brown => Color32::from_rgb(110, 80, 5)
     }
 }
 
