@@ -23,6 +23,8 @@ pub enum GameError {
     UnauthorizedVictim,
     MustStealSomeone,
     NoOneToSteal,
+    GameIsFull,
+    ColorNotAvailable
 }
 
 impl From<InvalidAction> for GameError {
@@ -85,6 +87,10 @@ impl Display for GameError {
                 write!(f, "Vous devez voler un joueur adjacent au voleur"),
             GameError::NoOneToSteal =>
                 write!(f, "Personne à voler sur cette tuile"),
+            GameError::GameIsFull =>
+                write!(f, "La partie est pleine"),
+            GameError::ColorNotAvailable =>
+                write!(f, "Cette couleur n'est pas disponible")
         }
     }
 }

@@ -4,10 +4,7 @@ use serde::{Deserialize, Serialize};
 pub use game_error::GameError;
 
 use crate::board::BuildingKind;
-use crate::{
-    Board, Building, Cost, EdgeId, Player, PlayerId, Production,
-    ResourceCounts, Roll, Scenario, Steal, Terrain, TileId, VertexId
-};
+use crate::{Board, Building, Cost, EdgeId, Player, PlayerColor, PlayerId, Production, ResourceCounts, Roll, Scenario, Steal, Terrain, TileId, VertexId};
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub(crate) enum StatusKind {
@@ -73,20 +70,29 @@ pub enum RollOutcome {
 }
 
 impl Game {
-    pub fn new(scenario: Scenario, players: Vec<Player>) -> Result<Game, GameError> {
-        if players.is_empty() {
-            Err(GameError::NotEnoughPlayers)
-        } else if players.len() > 6 {
-            Err(GameError::TooManyPlayers)
-        } else {
-            Ok(Game {
+    pub fn new(scenario: Scenario) -> Game {
+            Game {
                 scenario,
                 status: GameStatus::Starting,
-                turn_order: (0..players.len()).into_iter().map(PlayerId::new).collect(),
+                turn_order: Vec::new(),
                 current_turn: 0,
-                players,
+                players : Vec::new(),
                 board: None,
-            })
+            }
+
+    }
+
+    pub fn add_player(&mut self, player : Player) -> Result<(), GameError>{
+        if self.players.len() >= self.scenario.max_player() {
+            Err(GameError::GameIsFull)
+        } else {
+            if self.players.iter().any(|p| p.color() == player.color()) {
+                Err(GameError::ColorNotAvailable)
+            } else {
+                self.players.push(player);
+                Ok(())
+            }
+
         }
     }
 
@@ -101,7 +107,7 @@ impl Game {
     pub fn scenario(&self) -> &Scenario {
         &self.scenario
     }
-    
+
     pub fn current_player_index(&self) -> usize {
         self.current_turn
     }
@@ -114,9 +120,17 @@ impl Game {
     }
     pub fn start(&mut self, shuffled: &[Terrain]) -> Result<(), GameError> {
         self.check_status(&[StatusKind::Starting])?;
-        self.board = Some(self.scenario.layout(shuffled)?);
-        self.set_status(GameStatus::FirstPlacementSettlement);
-        Ok(())
+        if self.players.len() < self.scenario.min_player() {
+            Err(GameError::NotEnoughPlayers)
+        } else if self.players.len() > self.scenario.max_player() {
+            Err(GameError::TooManyPlayers)
+        }else {
+            self.board = Some(self.scenario.layout(shuffled)?);
+            self.set_status(GameStatus::FirstPlacementSettlement);
+            Ok(())
+        }
+
+
     }
 
     pub(crate) fn set_status(&mut self, status: GameStatus) {
@@ -529,16 +543,29 @@ mod tests {
 
     #[test]
     fn init_game() {
-        assert!(Game::new(Scenario::test_scenario(), vec![]).is_err());
-        let mut game = Game::new(
-            Scenario::test_scenario(),
-            vec![
-                Player::new(PlayerColor::White),
-                Player::new(PlayerColor::Red),
-                Player::new(PlayerColor::Blue),
-            ],
-        )
-        .unwrap();
+        let mut game = Game::new(Scenario::test_scenario());
+
+        assert_eq!(game.add_player(Player::new(PlayerColor::White)), Ok(()));
+        assert_eq!(game.start(&game.scenario.terrains().to_vec()), Err(GameError::NotEnoughPlayers));
+        assert_eq!(game.add_player(Player::new(PlayerColor::White)), Err(GameError::ColorNotAvailable));
+        assert_eq!(game.start(&game.scenario.terrains().to_vec()), Err(GameError::NotEnoughPlayers));
+        assert_eq!(game.add_player(Player::new(PlayerColor::Red)), Ok(()));
+        assert_eq!(game.start(&game.scenario.terrains().to_vec()), Ok(()));
+
+
+        let mut game = Game::new(Scenario::test_scenario());
+        assert_eq!(game.add_player(Player::new(PlayerColor::White)), Ok(()));
+        assert_eq!(game.add_player(Player::new(PlayerColor::Red)), Ok(()));
+        assert_eq!(game.add_player(Player::new(PlayerColor::Blue)), Ok(()));
+        assert_eq!(game.add_player(Player::new(PlayerColor::Orange)), Ok(()));
+        assert_eq!(game.add_player(Player::new(PlayerColor::Brown)), Err(GameError::GameIsFull));
+
+
+        let mut game = Game::new(Scenario::test_scenario());
+        assert_eq!(game.add_player(Player::new(PlayerColor::White)), Ok(()));
+        assert_eq!(game.add_player(Player::new(PlayerColor::Red)), Ok(()));
+        assert_eq!(game.add_player(Player::new(PlayerColor::Blue)), Ok(()));
+
 
         assert_eq!(
             game.set_players_order(vec![Roll::new(2, 4).unwrap()]),
@@ -634,15 +661,15 @@ mod tests {
 
     #[test]
     fn partie_complete() {
-        let mut game = Game::new(
-            Scenario::fast_standard(),
-            vec![
-                Player::new(PlayerColor::White),
-                Player::new(PlayerColor::Red),
-                Player::new(PlayerColor::Blue),
-            ],
-        )
-        .unwrap();
+        let mut game = Game::new(Scenario::fast_standard());
+
+
+        assert_eq!(game.add_player(Player::new(PlayerColor::White)), Ok(()));
+        assert_eq!(game.add_player(Player::new(PlayerColor::Red)), Ok(()));
+        assert_eq!(game.add_player(Player::new(PlayerColor::Blue)), Ok(()));
+
+
+
         assert_eq!(
             game.set_players_order(vec![
                 Roll::new(1, 4).unwrap(),
