@@ -1,9 +1,9 @@
-use crate::PlayerId;
+use crate::{PlayerId, ResourceCounts};
 
-pub struct Steal {victim : PlayerId, resource : u8}
+pub struct Steal {victim : PlayerId, resource : ResourceCounts}
 
 impl Steal {
-    pub fn new(victim : PlayerId, resource : u8) -> Steal {
+    pub fn new(victim : PlayerId, resource : ResourceCounts) -> Steal {
         Steal {victim, resource}
     }
 
@@ -11,7 +11,7 @@ impl Steal {
         self.victim
     }
 
-    pub fn resource(&self) -> u8 {
+    pub fn resource(&self) -> ResourceCounts {
         self.resource
     }
 }

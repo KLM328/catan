@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 pub use token::NumberToken;
 use crate::resource::Resource;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TerrainTokenMismatch {
     DesertHasNoToken,
     MissingToken(Terrain),

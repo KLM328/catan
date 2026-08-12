@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::{Cost, Resource};
 use crate::resource::counts::ResourceCounts;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ResourceError {
     NotEnoughResources,
     IsEmpty,
@@ -57,7 +57,7 @@ impl Hand {
         self.count() == 0
     }
 
-    pub(crate) fn get_resource(&self, index: u8) -> Result<ResourceCounts, ResourceError> {
+    fn get_resource(&self, index: u8) -> Result<ResourceCounts, ResourceError> {
         if self.is_empty() {
             Err(ResourceError::IsEmpty)
         } else {
@@ -66,8 +66,8 @@ impl Hand {
 
     }
 
-    pub fn random_pick(&self) -> u8 {
-        rand::random::<u8>() % self.count()
+    pub fn random_pick(&self) -> ResourceCounts {
+        self.get_resource(rand::random::<u8>() % self.count()).unwrap()
     }
 
 

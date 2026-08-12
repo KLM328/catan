@@ -1,4 +1,4 @@
-use catan::{Building, EdgeId, Game, GameError, GameStatus, Hand, PlayerColor, PlayerId, Resource, ResourceCounts, Roll, RollOutcome, Scenario, Tile, TileId, VertexId};
+use catan::{Building, EdgeId, Game, GameError, GameStatus, Hand, Player, PlayerColor, PlayerId, ResourceCounts, Roll, RollOutcome, Scenario, Tile, TileId, VertexId};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -14,28 +14,38 @@ pub enum ClientMessage {
     Join, //à réfléchir plus en détails plus tard
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct PlayerInfo {
     pub id: PlayerId,
     pub color: PlayerColor,
     pub hand_count: u8,
 }
+ impl From<(&Player, PlayerId)> for PlayerInfo {
+     fn from((player, id): (&Player, PlayerId)) -> Self {
+         Self {
+             color : player.color(),
+             hand_count : player.hand().count(),
+             id
+         }
+     }
+ }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum ServerMessage {
     BuildRoad(PlayerInfo, EdgeId),
     BuildSettlement(PlayerInfo, VertexId),
     UpgradeCity(PlayerInfo, VertexId),
     StealNotification {
         robber: PlayerInfo,
-        victim: PlayerInfo,
+        victim: Option<PlayerInfo>,
     },
     StealConfirmation {
         robber: PlayerInfo,
         victim: PlayerInfo,
-        resource: Resource,
+        resource: ResourceCounts,
     },
     Discard(PlayerInfo),
+    NewRobberLocation(TileId),
     Roll(Roll, RollOutcome),
     NextPlayer(PlayerInfo),
     GameEnd {
@@ -60,6 +70,7 @@ pub enum ServerMessage {
     },
     StartGame,
     Error(String),
+    GameError(GameError)
 }
 
 impl From<(&Game, PlayerId)> for ServerMessage {
@@ -107,7 +118,7 @@ impl From<(&Game, PlayerId)> for ServerMessage {
 
 impl From<GameError> for ServerMessage {
     fn from(error: GameError) -> Self {
-        ServerMessage::Error(error.to_string())
+        ServerMessage::GameError(error)
     }
 }
 
@@ -165,12 +176,12 @@ mod tests {
             ServerMessage::UpgradeCity(dummy_player_info(0), VertexId::new(3)),
             ServerMessage::StealNotification {
                 robber: dummy_player_info(0),
-                victim: dummy_player_info(1),
+                victim: Some(dummy_player_info(1)),
             },
             ServerMessage::StealConfirmation {
                 robber: dummy_player_info(0),
                 victim: dummy_player_info(1),
-                resource: Resource::Wood, // Adaptez avec une ressource existante dans `catan::Resource`
+                resource: ResourceCounts::new([1,0,0,0,0]), // Adaptez avec une ressource existante dans `catan::Resource`
             },
             ServerMessage::Discard(dummy_player_info(0)),
             ServerMessage::Roll(

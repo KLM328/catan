@@ -1,6 +1,7 @@
 use crate::{ConnectedEdges, EdgeId, PlayerId, Resource, ResourceCounts};
 use crate::{Roll, TileId, Topology, VertexId};
 use std::fmt;
+use serde::{Deserialize, Serialize};
 
 mod building;
 mod production;
@@ -11,7 +12,7 @@ pub use crate::board::building::{Building, BuildingKind};
 pub use crate::board::production::{Gain, Production};
 pub use crate::board::tile::{NumberToken, Terrain, TerrainTokenMismatch, Tile};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum InvalidBoard {
     WrongTileCount { expected: usize, got: usize },
     WrongDistribution,
@@ -41,7 +42,7 @@ impl From<TerrainTokenMismatch> for InvalidBoard {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum InvalidAction {
     // structurel
     UnexistingTile(TileId),

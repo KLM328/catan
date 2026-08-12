@@ -1,7 +1,8 @@
 use std::fmt::{Display, Formatter};
+use serde::{Deserialize, Serialize};
 use crate::{InvalidAction, InvalidBoard, PlayerId, ResourceError};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum GameError {
     BoardInitialization(InvalidBoard),
     Placement(InvalidAction),

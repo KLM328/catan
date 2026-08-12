@@ -524,10 +524,7 @@ impl Game {
                     if victims.is_empty() {
                         Err(GameError::NoOneToSteal)
                     } else if victims.contains(&steal.victim()) {
-                        let resource: ResourceCounts = self
-                            .get_player_mut(steal.victim())?
-                            .hand()
-                            .get_resource(steal.resource())?;
+                        let resource: ResourceCounts = steal.resource();
                         self.get_player_mut(steal.victim())?
                             .pay(&Cost::new(resource))?;
                         self.get_player_mut(player_id)?.receive(resource);
@@ -1147,7 +1144,7 @@ mod tests {
         assert_eq!(
             game.steal(
                 game.current_player(),
-                Some(Steal::new(PlayerId::new(1), 0))
+                Some(Steal::new(PlayerId::new(1), ResourceCounts::default()))
             ),
             Err(GameError::UnauthorizedVictim)
         );
@@ -1175,7 +1172,7 @@ mod tests {
         assert_eq!(
             game.steal(
                 game.current_player(),
-                Some(Steal::new(PlayerId::new(0), 0))
+                Some(Steal::new(PlayerId::new(0), ResourceCounts::new([1, 0, 0, 0, 0])))
             ),
             Ok(())
         );
@@ -1556,7 +1553,7 @@ mod tests {
         assert_eq!(
             game.steal(
                 game.current_player(),
-                Some(Steal::new(PlayerId::new(1), 1))
+                Some(Steal::new(PlayerId::new(1), ResourceCounts::default()))
             ),
             Err(GameError::NoOneToSteal)
         );
