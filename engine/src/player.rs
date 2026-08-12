@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 use crate::{Hand, ResourceError, ResourceCounts};
 
@@ -22,7 +23,7 @@ impl PlayerColor {
             PlayerColor::Brown => {"Marron"}
         }
     }
-    
+
     pub const ALL : [Self; 6] = [Self::Red, Self::Blue, Self::White, Self::Orange, Self::Green, Self::Brown];
 }
 
@@ -35,6 +36,12 @@ impl PlayerId {
 
     pub fn value(self) -> usize {
         self.0
+    }
+}
+
+impl Display for PlayerId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Joueur {}", self.0)
     }
 }
 

@@ -13,7 +13,7 @@ pub(crate) use state::GameState;
 pub(crate) use connection::handle;
 #[tokio::main]
 async fn main() {
-    let game_state : Arc<Mutex<GameState>> = Arc::new(Mutex::new(GameState::new(Game::new(Scenario::standard()))));
+    let game_state : Arc<Mutex<GameState>> = Arc::new(Mutex::new(GameState::new(Game::new(Scenario::standard()), true)));
 
 
     let listener = TcpListener::bind("127.0.0.1:8080").await.unwrap();

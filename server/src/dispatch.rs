@@ -97,11 +97,11 @@ fn build_messages(
             game_state.game_mut().next_player(player_id)?;
             broadcast(game_state, ServerMessage::NextPlayer(game_state.player_info(player_id)?), &mut messages)
         }
-        ClientMessage::StartGame(random_board) => {
+        ClientMessage::StartGame => {
             if player_id == PlayerId::new(0) {
                 let rolls = game_state.game().players().iter().map(|_| Roll::random()).collect();
                 game_state.game_mut().set_players_order(&rolls)?;
-                let tiles = if random_board {game_state.game().scenario().shuffled_terrains()} else {game_state.game().scenario().terrains().to_vec()};
+                let tiles = if game_state.random_board() {game_state.game().scenario().shuffled_terrains()} else {game_state.game().scenario().terrains().to_vec()};
                 game_state.game_mut().start(&tiles)?;
                 broadcast(game_state, ServerMessage::StartGame(rolls), &mut messages);
                 for &player_id in game_state.senders().keys() {

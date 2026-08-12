@@ -1,4 +1,4 @@
-use catan::{Building, EdgeId, Game, GameError, GameStatus, Hand, Player, PlayerColor, PlayerId, ResourceCounts, Roll, RollOutcome, Scenario, Tile, TileId, VertexId};
+use catan::{Building, EdgeId, Game, GameStatus, Hand, Player, PlayerColor, PlayerId, ResourceCounts, Roll, RollOutcome, Scenario, Tile, TileId, VertexId};
 use serde::{Deserialize, Serialize};
 use crate::server_error::ServerError;
 
@@ -15,7 +15,7 @@ pub enum ClientMessage {
     Roll,
     EndTurn,
     Join, //à réfléchir plus en détails plus tard
-    StartGame(bool),
+    StartGame,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
@@ -62,6 +62,7 @@ pub enum ServerMessage {
         tiles: Vec<Tile>,
         buildings: Vec<Option<Building>>,
         roads: Vec<Option<PlayerId>>,
+        player_id: PlayerId,
         players: Vec<PlayerInfo>,
         game_status: GameStatus,
         turn_order: Vec<PlayerId>,
@@ -69,6 +70,7 @@ pub enum ServerMessage {
         hand: Hand,
     },
     LobbyView {
+        player_id: PlayerId,
         players: Vec<PlayerInfo>,
         scenario: Scenario,
     },
@@ -91,6 +93,7 @@ impl From<(&Game, PlayerId)> for ServerMessage {
                     })
                     .collect(),
                 scenario: game.scenario().clone(),
+                player_id: viewer,
             },
             _ => {
                 let board = game.board().unwrap();
@@ -113,6 +116,7 @@ impl From<(&Game, PlayerId)> for ServerMessage {
                     turn_order: game.turn_order().to_vec(),
                     current_turn: game.current_player_index(),
                     hand: game.get_player(viewer).unwrap().hand().clone(),
+                    player_id: viewer,
                 }
             }
         }
@@ -128,7 +132,7 @@ impl From<ServerError> for ServerMessage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use catan::{BuildingKind, Production};
+    use catan::{BuildingKind, GameError, Production};
 
     fn assert_serde_roundtrip<T>(message: T)
     where
@@ -203,6 +207,7 @@ mod tests {
             ServerMessage::LobbyView {
                 players: vec![p1, p2],
                 scenario: Scenario::standard(),
+                player_id: PlayerId::new(0),
             },
             ServerMessage::StartGame(vec![
                 Roll::new(4, 6).unwrap(),
@@ -232,6 +237,7 @@ mod tests {
             turn_order: vec![PlayerId::new(0)],
             current_turn: 0,
             hand: Hand::default(),
+            player_id: PlayerId::new(0),
         };
 
         assert_serde_roundtrip(game_view);

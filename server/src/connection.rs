@@ -58,7 +58,14 @@ pub(crate) async fn handle(
         line.clear();
         match buf_reader.read_line(&mut line).await {
             Ok(0) => {
-                println!("{addr} s'est déconnecté");
+                let senders : Vec<Sender<ServerMessage>> = {let mut g = game_state.lock().unwrap();
+                g.senders_mut().remove(&player_id);
+                g.senders().iter().map(|(_, tx)| tx.clone()).collect()};
+                
+                for sender in senders {
+                    let _ = sender.send(ServerMessage::Leave(player_id)).await;
+                }
+                println!("{player_id} s'est déconnecté");
                 return;
             }
             Ok(_) => {
