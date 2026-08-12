@@ -99,7 +99,7 @@ fn build_messages(
         }
         ClientMessage::StartGame(random_board) => {
             if player_id == PlayerId::new(0) {
-                let rolls = game_state.game().players().iter().map(|p| Roll::random()).collect();
+                let rolls = game_state.game().players().iter().map(|_| Roll::random()).collect();
                 game_state.game_mut().set_players_order(&rolls)?;
                 let tiles = if random_board {game_state.game().scenario().shuffled_terrains()} else {game_state.game().scenario().terrains().to_vec()};
                 game_state.game_mut().start(&tiles)?;
@@ -109,11 +109,11 @@ fn build_messages(
                 }
             }
             else {
-                Err(ServerError::NotTheHost)?
+                return Err(ServerError::NotTheHost)
             }
         }
 
-        _  => Err(ServerError::InvalidMessageType)?,
+        ClientMessage::Join  => return Err(ServerError::InvalidMessageType)
     };
     Ok(messages)
 }
