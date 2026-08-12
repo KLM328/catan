@@ -56,14 +56,12 @@ pub(crate) fn show(ui: &mut Ui, game: &Game, last_roll: &mut Option<Roll>) -> Ve
                 face,
             );
 
-            match game.status() {
-                GameStatus::AwaitingRoll => {
-                    if response.on_hover_text("Lancer les dés").clicked() {
-                        actions.push(UiAction::Roll);
-                    }
-                }
-                _ => {}
+
+            if matches!(game.status(),  GameStatus::AwaitingRoll) && response.on_hover_text("Lancer les dés").clicked() {
+                    actions.push(UiAction::Roll);
             }
+
+
         });
 
     actions

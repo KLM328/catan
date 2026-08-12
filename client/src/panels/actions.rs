@@ -7,8 +7,7 @@ pub(crate) fn show(ui : &mut Ui, game : &Game, build_mode: &mut BuildMode) {
 
     egui::Area::new(egui::Id::new("actions"))
         .anchor(Align2::RIGHT_BOTTOM, egui::vec2(-theme::SIDE_PANEL_W - theme::BUTTON_W_H * 2.0 - 42.0, -24.0))
-        .show(ui.ctx(), |ui| match game.status() {
-            GameStatus::PlayingActions => {
+        .show(ui.ctx(), |ui| if matches!(game.status(), GameStatus::PlayingActions) {
                 let player = game.get_player(game.current_player()).unwrap();
                 let color = player_color(player);
 
@@ -31,8 +30,5 @@ pub(crate) fn show(ui : &mut Ui, game : &Game, build_mode: &mut BuildMode) {
                         }
                     }
                 });
-            }
-
-            _ => {}
         });
 }

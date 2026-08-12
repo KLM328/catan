@@ -92,7 +92,7 @@ pub(crate) async fn handle(
 }
 
 async fn join_phase(
-    line: &String,
+    line: &str,
     game_state: &Arc<Mutex<GameState>>,
     writer: &mut OwnedWriteHalf,
 ) -> Option<(PlayerId, Receiver<ServerMessage>)> {

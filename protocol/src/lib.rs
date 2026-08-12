@@ -12,6 +12,7 @@ pub enum ClientMessage {
     Roll,
     EndTurn,
     Join, //à réfléchir plus en détails plus tard
+    StartGame(bool),
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]

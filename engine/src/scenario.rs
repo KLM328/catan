@@ -1,6 +1,9 @@
 use crate::{Board, InvalidBoard, NumberToken, Terrain, TileId, Topology};
 use std::collections::HashMap;
+use rand::rng;
+use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
+
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct Scenario {
@@ -16,6 +19,14 @@ impl Scenario {
     pub fn terrains(&self) -> &[Terrain] {
         &self.terrain_bag
     }
+
+    pub fn shuffled_terrains(&self) -> Vec<Terrain> {
+        let mut terrains = self.terrain_bag.clone();
+        terrains.shuffle(&mut rng());
+        terrains
+    }
+
+
     pub fn standard() -> Scenario {
         let hexes = Topology::spiral(2);
 

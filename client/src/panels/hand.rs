@@ -25,10 +25,8 @@ pub(crate) fn show(ui: &mut Ui, game: &Game, selection: &mut ResourceCounts) -> 
 
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
-                    if let Some(required) = required {
-                        if selection.count() == required && ui.button("Défausser").clicked() {
+                    if let Some(required) = required && selection.count() == required && ui.button("Défausser").clicked() {
                             actions.push(UiAction::Discard(player_id, *selection));
-                        }
                     }
                     let c = player_color(player);
                     let label = match required {

@@ -1,8 +1,8 @@
+use crate::panels::steal;
+use crate::{UiAction, player_color, terrain_color};
+use catan::{BuildingKind, EdgeId, Game, GameStatus, Layout, TileId, VertexId};
 use eframe::egui;
 use eframe::egui::{Align2, Color32, FontId, Pos2, Sense, Shape, Stroke, Ui};
-use catan::{BuildingKind, EdgeId, Game, GameStatus, Layout, TileId, VertexId};
-use crate::panels::steal;
-use crate::{player_color, terrain_color, UiAction};
 #[derive(PartialEq, Clone, Copy)]
 pub(crate) enum BuildMode {
     None,
@@ -11,7 +11,12 @@ pub(crate) enum BuildMode {
     City,
 }
 
-pub(crate) fn show(ui: &mut Ui, game: &Game, hex_size : &mut f32, build_mode : &BuildMode) -> Vec<UiAction> {
+pub(crate) fn show(
+    ui: &mut Ui,
+    game: &Game,
+    hex_size: &mut f32,
+    build_mode: &BuildMode,
+) -> Vec<UiAction> {
     let mut actions = Vec::new();
     egui::CentralPanel::default().show(ui, |ui| {
         actions.extend(steal::show(ui, game));
@@ -118,9 +123,7 @@ pub(crate) fn show(ui: &mut Ui, game: &Game, hex_size : &mut f32, build_mode : &
                 let pos = Pos2::new(x, y);
                 let color = player_color(game.get_player(b.owner()).unwrap());
                 match b.kind() {
-                    BuildingKind::Settlement => {
-                        painter.circle_filled(pos, *hex_size * 0.3, color)
-                    }
+                    BuildingKind::Settlement => painter.circle_filled(pos, *hex_size * 0.3, color),
                     BuildingKind::City => painter.rect_filled(
                         egui::Rect::from_center_size(
                             pos,
@@ -133,59 +136,55 @@ pub(crate) fn show(ui: &mut Ui, game: &Game, hex_size : &mut f32, build_mode : &
             }
         }
 
-        if response.clicked() {
-            if let Some(pos) = response.interact_pointer_pos() {
-                let radius = *hex_size * 0.30;
-                match game.status() {
-                    GameStatus::Starting => {}
-                    GameStatus::FirstPlacementSettlement
-                    | GameStatus::SecondPlacementSettlement => {
+        if response.clicked()
+            && let Some(pos) = response.interact_pointer_pos()
+        {
+            let radius = *hex_size * 0.30;
+            match game.status() {
+                GameStatus::Starting => {}
+                GameStatus::FirstPlacementSettlement | GameStatus::SecondPlacementSettlement => {
+                    if let Some(vertex_location) = layout.pick_vertex(topo, (pos.x, pos.y), radius)
+                    {
+                        actions.push(UiAction::BuildSettlement(vertex_location));
+                    }
+                }
+                GameStatus::FirstPlacementRoad | GameStatus::SecondPlacementRoad => {
+                    if let Some(edge_location) = layout.pick_edge(topo, (pos.x, pos.y), radius) {
+                        actions.push(UiAction::BuildRoad(edge_location));
+                    }
+                }
+                GameStatus::AwaitingRoll => {}
+                GameStatus::AwaitingDiscard { .. } => {}
+                GameStatus::AwaitingSteal => {}
+                GameStatus::AwaitingNewRobberLocation => {
+                    if let Some(tile_location) = layout.pick_tile(topo, (pos.x, pos.y)) {
+                        actions.push(UiAction::MoveRobber(tile_location));
+                    }
+                }
+                GameStatus::PlayingActions => match build_mode {
+                    BuildMode::None => {}
+                    BuildMode::Road => {
+                        if let Some(edge_location) = layout.pick_edge(topo, (pos.x, pos.y), radius)
+                        {
+                            actions.push(UiAction::BuildRoad(edge_location));
+                        }
+                    }
+                    BuildMode::Settlement => {
                         if let Some(vertex_location) =
                             layout.pick_vertex(topo, (pos.x, pos.y), radius)
                         {
                             actions.push(UiAction::BuildSettlement(vertex_location));
                         }
                     }
-                    GameStatus::FirstPlacementRoad | GameStatus::SecondPlacementRoad => {
-                        if let Some(edge_location) = layout.pick_edge(topo, (pos.x, pos.y), radius)
+                    BuildMode::City => {
+                        if let Some(vertex_location) =
+                            layout.pick_vertex(topo, (pos.x, pos.y), radius)
                         {
-                            actions.push(UiAction::BuildRoad(edge_location));
+                            actions.push(UiAction::UpgradeCity(vertex_location))
                         }
                     }
-                    GameStatus::AwaitingRoll => {}
-                    GameStatus::AwaitingDiscard { .. } => {}
-                    GameStatus::AwaitingSteal => {}
-                    GameStatus::AwaitingNewRobberLocation => {
-                        if let Some(tile_location) = layout.pick_tile(topo, (pos.x, pos.y)) {
-                            actions.push(UiAction::MoveRobber(tile_location));
-                        }
-                    }
-                    GameStatus::PlayingActions => match build_mode {
-                        BuildMode::None => {}
-                        BuildMode::Road => {
-                            if let Some(edge_location) =
-                                layout.pick_edge(topo, (pos.x, pos.y), radius)
-                            {
-                                actions.push(UiAction::BuildRoad(edge_location));
-                            }
-                        }
-                        BuildMode::Settlement => {
-                            if let Some(vertex_location) =
-                                layout.pick_vertex(topo, (pos.x, pos.y), radius)
-                            {
-                                actions.push(UiAction::BuildSettlement(vertex_location));
-                            }
-                        }
-                        BuildMode::City => {
-                            if let Some(vertex_location) =
-                                layout.pick_vertex(topo, (pos.x, pos.y), radius)
-                            {
-                                actions.push(UiAction::UpgradeCity(vertex_location))
-                            }
-                        }
-                    },
-                    GameStatus::End { .. } => {}
-                }
+                },
+                GameStatus::End { .. } => {}
             }
         }
     });

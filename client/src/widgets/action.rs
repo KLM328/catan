@@ -46,11 +46,9 @@ pub(crate) fn action_button(
                 [c + egui::vec2(-16.0, 8.0), c + egui::vec2(16.0, -8.0)],
                 Stroke::new(7.0, piece),
             );
-            ()
         }
         BuildMode::Settlement => {
             painter.circle_filled(c, 12.0, piece);
-            ()
         }
         BuildMode::City => {
             painter.rect_filled(
@@ -58,7 +56,6 @@ pub(crate) fn action_button(
                 3.0,
                 piece,
             );
-            ()
         }
         BuildMode::None => (),
     }
@@ -66,7 +63,7 @@ pub(crate) fn action_button(
     // Le coût, en pastilles de la couleur des terrains.
     let dots: Vec<Resource> = Resource::ALL
         .iter()
-        .flat_map(|&r| std::iter::repeat(r).take(cost.amount(r) as usize))
+        .flat_map(|&r| std::iter::repeat_n(r, cost.amount(r) as usize))
         .collect();
     let dw = 11.0;
     let start = rect.center().x - (dots.len() as f32 - 1.0) * dw * 0.5;
