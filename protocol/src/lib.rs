@@ -1,5 +1,8 @@
 use catan::{Building, EdgeId, Game, GameError, GameStatus, Hand, Player, PlayerColor, PlayerId, ResourceCounts, Roll, RollOutcome, Scenario, Tile, TileId, VertexId};
 use serde::{Deserialize, Serialize};
+use crate::server_error::ServerError;
+
+pub mod server_error;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub enum ClientMessage {
@@ -69,9 +72,8 @@ pub enum ServerMessage {
         players: Vec<PlayerInfo>,
         scenario: Scenario,
     },
-    StartGame,
-    Error(String),
-    GameError(GameError)
+    StartGame(Vec<Roll>),
+    Error(ServerError),
 }
 
 impl From<(&Game, PlayerId)> for ServerMessage {
@@ -117,9 +119,9 @@ impl From<(&Game, PlayerId)> for ServerMessage {
     }
 }
 
-impl From<GameError> for ServerMessage {
-    fn from(error: GameError) -> Self {
-        ServerMessage::GameError(error)
+impl From<ServerError> for ServerMessage {
+    fn from(error: ServerError) -> Self {
+        ServerMessage::Error(ServerError::from(error))
     }
 }
 
@@ -202,7 +204,11 @@ mod tests {
                 players: vec![p1, p2],
                 scenario: Scenario::standard(),
             },
-            ServerMessage::StartGame,
+            ServerMessage::StartGame(vec![
+                Roll::new(4, 6).unwrap(),
+                Roll::new(4, 5).unwrap(),
+            ]),
+            ServerMessage::from(ServerError::from(GameError::InvalidGameStatus))
         ];
 
         for msg in messages {

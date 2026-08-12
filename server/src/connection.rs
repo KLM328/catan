@@ -9,6 +9,7 @@ use tokio::net::tcp::OwnedWriteHalf;
 use tokio::spawn;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{Receiver, Sender};
+use catan_protocol::server_error::ServerError;
 
 pub(crate) async fn handle(
     socket: TcpStream,
@@ -77,7 +78,7 @@ pub(crate) async fn handle(
                         }
                     }
                     Err(_) => {
-                        let msg = ServerMessage::Error("On attend un message de type ClientMessage".to_string());
+                        let msg = ServerMessage::from(ServerError::InvalidMessageFormat);
                         let _ = tx.send(msg).await;
                     }
                 }
@@ -112,7 +113,7 @@ async fn join_phase(
                 }
                 Some((player_id, rx))
             } else {
-                let msg = ServerMessage::from(player_result.unwrap_err());
+                let msg = ServerMessage::from(ServerError::from(player_result.unwrap_err()));
                 let json = serde_json::to_string(&msg).unwrap();
                 writer.write_all(json.as_bytes()).await.unwrap();
                 None
@@ -120,7 +121,7 @@ async fn join_phase(
         }
 
         _ => {
-            let msg = ServerMessage::Error("On attend un message de type Join".to_string());
+            let msg = ServerMessage::from(ServerError::InvalidMessageType);
             let json = serde_json::to_string(&msg).unwrap();
             writer.write_all(json.as_bytes()).await.unwrap();
             None

@@ -192,7 +192,7 @@ impl Game {
     }
 
 
-    pub fn set_players_order(&mut self, rolls: Vec<Roll>) -> Result<(), GameError> {
+    pub fn set_players_order(&mut self, rolls: &Vec<Roll>) -> Result<(), GameError> {
         self.check_status(&[StatusKind::Starting])?;
         if rolls.len() == self.players.len() {
             let best = rolls.iter().map(|r| r.value()).max().unwrap();
@@ -571,11 +571,11 @@ mod tests {
 
 
         assert_eq!(
-            game.set_players_order(vec![Roll::new(2, 4).unwrap()]),
+            game.set_players_order(&vec![Roll::new(2, 4).unwrap()]),
             Err(GameError::WrongRollCount)
         );
         assert_eq!(
-            game.set_players_order(vec![
+            game.set_players_order(&vec![
                 Roll::new(2, 4).unwrap(),
                 Roll::new(5, 2).unwrap(),
                 Roll::new(3, 4).unwrap()
@@ -583,7 +583,7 @@ mod tests {
             Err(GameError::TiedRolls)
         );
         assert_eq!(
-            game.set_players_order(vec![
+            game.set_players_order(&vec![
                 Roll::new(2, 4).unwrap(),
                 Roll::new(6, 2).unwrap(),
                 Roll::new(3, 4).unwrap()
@@ -674,7 +674,7 @@ mod tests {
 
 
         assert_eq!(
-            game.set_players_order(vec![
+            game.set_players_order(&vec![
                 Roll::new(1, 4).unwrap(),
                 Roll::new(6, 2).unwrap(),
                 Roll::new(3, 4).unwrap()

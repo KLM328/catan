@@ -11,7 +11,6 @@ use tokio::spawn;
 
 pub(crate) use state::GameState;
 pub(crate) use connection::handle;
-
 #[tokio::main]
 async fn main() {
     let game_state : Arc<Mutex<GameState>> = Arc::new(Mutex::new(GameState::new(Game::new(Scenario::standard()))));
