@@ -1,7 +1,7 @@
 use crate::state::GameState;
 use catan::{PlayerId, Roll, Steal};
 use catan_protocol::{ClientMessage, PlayerInfo, ServerMessage};
-use catan_protocol::server_error::ServerError;
+use catan_protocol::ServerError;
 
 pub(crate) fn apply(
     game_state: &mut GameState,
@@ -19,8 +19,6 @@ pub(crate) fn apply(
             messages
         }
     }
-
-
 }
 
 fn broadcast(
@@ -116,7 +114,7 @@ fn build_messages(
             }
         }
 
-        ClientMessage::Join  => return Err(ServerError::InvalidMessageType)
+        ClientMessage::Join {..}  => return Err(ServerError::InvalidMessageType)
     };
     Ok(messages)
 }

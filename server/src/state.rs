@@ -1,5 +1,5 @@
 use catan::{Game, GameError, PlayerId};
-use catan_protocol::{PlayerInfo, ServerMessage};
+use catan_protocol::{PlayerInfo, ServerMessage, Token};
 use std::collections::HashMap;
 use tokio::sync::mpsc::Sender;
 use tokio::time::Instant;
@@ -9,6 +9,7 @@ pub(crate) struct GameState {
     random_board : bool,
     senders: HashMap<PlayerId, Sender<ServerMessage>>,
     paused_since: Option<Instant>,
+    tokens: HashMap<Token, PlayerId>
 }
 
 impl GameState {
@@ -18,6 +19,7 @@ impl GameState {
             random_board,
             senders: HashMap::new(),
             paused_since: None,
+            tokens: HashMap::new()
         }
     }
 
@@ -27,6 +29,14 @@ impl GameState {
 
     pub(crate) fn game_mut(&mut self) -> &mut Game {
         &mut self.game
+    }
+    
+    pub(crate) fn tokens(&self) -> &HashMap<Token, PlayerId> {
+        &self.tokens
+    }
+    
+    pub(crate) fn tokens_mut(&mut self) -> &mut HashMap<Token, PlayerId> {
+        &mut self.tokens
     }
 
     pub(crate) fn senders(&self) -> &HashMap<PlayerId, Sender<ServerMessage>> {

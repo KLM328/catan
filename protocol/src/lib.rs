@@ -1,8 +1,11 @@
 use catan::{Building, EdgeId, Game, GameStatus, Hand, Player, PlayerColor, PlayerId, ResourceCounts, Roll, RollOutcome, Scenario, Tile, TileId, VertexId};
 use serde::{Deserialize, Serialize};
-use crate::server_error::ServerError;
 
-pub mod server_error;
+mod server_error;
+mod token;
+
+pub use server_error::ServerError;
+pub use token::Token;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub enum ClientMessage {
@@ -14,7 +17,7 @@ pub enum ClientMessage {
     RobberLocation(TileId),
     Roll,
     EndTurn,
-    Join, //à réfléchir plus en détails plus tard
+    Join {token : Option<Token>}, 
     StartGame,
 }
 
@@ -76,6 +79,7 @@ pub enum ServerMessage {
     },
     StartGame(Vec<Roll>),
     Error(ServerError),
+    JoinGame(Token),
 }
 
 impl From<(&Game, PlayerId)> for ServerMessage {
@@ -164,7 +168,7 @@ mod tests {
             ClientMessage::RobberLocation(TileId::new(4)),
             ClientMessage::Roll,
             ClientMessage::EndTurn,
-            ClientMessage::Join,
+            ClientMessage::Join{token : None},
         ];
 
         for msg in messages {
