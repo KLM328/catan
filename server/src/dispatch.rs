@@ -99,10 +99,10 @@ fn build_messages(
         }
         ClientMessage::StartGame(random_board) => {
             if player_id == PlayerId::new(0) {
-                let tiles = if random_board {game_state.game().scenario().shuffled_terrains()} else {game_state.game().scenario().terrains().to_vec()};
-                game_state.game_mut().start(&tiles)?;
                 let rolls = game_state.game().players().iter().map(|p| Roll::random()).collect();
                 game_state.game_mut().set_players_order(&rolls)?;
+                let tiles = if random_board {game_state.game().scenario().shuffled_terrains()} else {game_state.game().scenario().terrains().to_vec()};
+                game_state.game_mut().start(&tiles)?;
                 broadcast(game_state, ServerMessage::StartGame(rolls), &mut messages);
                 for &player_id in game_state.senders().keys() {
                     messages.push((player_id, ServerMessage::from((game_state.game(), player_id)) ))
