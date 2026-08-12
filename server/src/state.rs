@@ -2,11 +2,13 @@ use catan::{Game, GameError, PlayerId};
 use catan_protocol::{PlayerInfo, ServerMessage};
 use std::collections::HashMap;
 use tokio::sync::mpsc::Sender;
+use tokio::time::Instant;
 
 pub(crate) struct GameState {
     game: Game,
     random_board : bool,
     senders: HashMap<PlayerId, Sender<ServerMessage>>,
+    paused_since: Option<Instant>,
 }
 
 impl GameState {
@@ -15,6 +17,7 @@ impl GameState {
             game,
             random_board,
             senders: HashMap::new(),
+            paused_since: None,
         }
     }
 
@@ -37,7 +40,14 @@ impl GameState {
     pub(crate) fn random_board(&self) -> bool {
         self.random_board
     }
-    
+
+    pub(crate) fn paused_since(&self) -> Option<Instant> {
+        self.paused_since
+    }
+    pub(crate) fn set_paused_since(&mut self, paused_since: Option<Instant>) {
+        self.paused_since = paused_since;
+    }
+
     pub(crate) fn player_info(&self, player_id: PlayerId) -> Result<PlayerInfo, GameError> {
         Ok(PlayerInfo::from((self.game.get_player(player_id)? , player_id)))
     }

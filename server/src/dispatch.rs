@@ -39,6 +39,9 @@ fn build_messages(
     msg: ClientMessage,
 ) -> Result<Vec<(PlayerId, ServerMessage)>, ServerError> {
     let mut messages = Vec::new();
+    if game_state.senders().len() < game_state.game().players().len() {
+        return Err(ServerError::GamePaused)
+    }
     match msg {
         ClientMessage::BuildRoad(edge) => {
             game_state.game_mut().build_road(player_id, edge)?;

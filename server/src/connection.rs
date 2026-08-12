@@ -1,6 +1,6 @@
 use crate::dispatch::apply;
 use crate::state::GameState;
-use catan::{Player, PlayerId};
+use catan::{GameStatus, Player, PlayerId};
 use catan_protocol::{ClientMessage, ServerMessage};
 use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
@@ -9,6 +9,7 @@ use tokio::net::tcp::OwnedWriteHalf;
 use tokio::spawn;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::time::Instant;
 use catan_protocol::server_error::ServerError;
 
 pub(crate) async fn handle(
@@ -60,12 +61,18 @@ pub(crate) async fn handle(
             Ok(0) => {
                 let senders : Vec<Sender<ServerMessage>> = {let mut g = game_state.lock().unwrap();
                 g.senders_mut().remove(&player_id);
+                    if !matches!(g.game().status(), GameStatus::Starting){
+                        g.set_paused_since(Some(Instant::now()))
+                    }
                 g.senders().iter().map(|(_, tx)| tx.clone()).collect()};
-                
+
                 for sender in senders {
                     let _ = sender.send(ServerMessage::Leave(player_id)).await;
                 }
                 println!("{player_id} s'est déconnecté");
+
+
+
                 return;
             }
             Ok(_) => {

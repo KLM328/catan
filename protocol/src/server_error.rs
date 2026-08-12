@@ -7,6 +7,7 @@ pub enum ServerError {
     InvalidMessageFormat,
     InvalidMessageType,
     Rules(GameError),
+    GamePaused,
 }
 
 impl From<GameError> for ServerError {
