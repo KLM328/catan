@@ -1,6 +1,6 @@
 use crate::dispatch::apply;
 use crate::state::GameState;
-use catan::{GameStatus, Player, PlayerId};
+use catan::{GameStatus, PlayerId};
 use catan_protocol::ServerError;
 use catan_protocol::{ClientMessage, PlayerInfo, ServerMessage, Token};
 use std::sync::{Arc, Mutex};
@@ -154,8 +154,8 @@ fn join_game(
     token: Option<Token>,
 ) -> Result<(PlayerId, Token), ServerError> {
     match token {
-        Some(token) => match game_state.tokens().get(&token) {
-            Some(&player_id) => {
+        Some(token) => match game_state.player_by_token(token) {
+            Some(player_id) => {
                 if let Some(_) = game_state.senders().get(&player_id) {
                     Err(ServerError::PlayerIsAlreadyConnected)
                 } else {
@@ -165,11 +165,7 @@ fn join_game(
             None => Err(ServerError::InvalidToken),
         },
         None => {
-            let color = game_state.game().next_player_color()?;
-            let player_id = game_state.game_mut().add_player(Player::new(color))?;
-            let token = Token::new();
-            game_state.tokens_mut().insert(token, player_id);
-            Ok((player_id, token))
+            game_state.new_player()
         }
     }
 }
