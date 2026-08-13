@@ -46,14 +46,14 @@ impl GameState {
     }
 
     pub(crate) fn register(&mut self, player: PlayerId, tx: Sender<ServerMessage>) -> Result<(), ServerError> {
-        if self.senders.contains_key(&player) {
-            Err(ServerError::PlayerIsAlreadyConnected)
-        } else {
-            self.senders.insert(player, tx);
+        if let std::collections::hash_map::Entry::Vacant(e) = self.senders.entry(player) {
+            e.insert(tx);
             if self.is_paused() && self.senders.len() == self.game.players().len() {
                 self.resume();
             }
             Ok(())
+        } else {
+            Err(ServerError::PlayerIsAlreadyConnected)
         }
     }
 
