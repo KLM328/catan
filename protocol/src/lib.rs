@@ -80,6 +80,8 @@ pub enum ServerMessage {
     StartGame(Vec<Roll>),
     Error(ServerError),
     JoinGame(Token),
+    PauseGame,
+    ResumeGame,
 }
 
 impl From<(&Game, PlayerId)> for ServerMessage {

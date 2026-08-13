@@ -1,7 +1,7 @@
 use crate::dispatch::apply;
 use crate::state::GameState;
 use catan::{GameStatus, Player, PlayerId};
-use catan_protocol::{ClientMessage, ServerMessage, Token};
+use catan_protocol::{ClientMessage, PlayerInfo, ServerMessage, Token};
 use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpStream;
@@ -59,20 +59,23 @@ pub(crate) async fn handle(
         line.clear();
         match buf_reader.read_line(&mut line).await {
             Ok(0) => {
-                let senders: Vec<Sender<ServerMessage>> = {
+                let outgoing: Vec<(Sender<ServerMessage>, ServerMessage)> = {
+                    let mut outgoing = Vec::new();
                     let mut g = game_state.lock().unwrap();
                     g.senders_mut().remove(&player_id);
-                    if !matches!(g.game().status(), GameStatus::Starting) {
-                        g.set_paused_since(Some(Instant::now()))
+                    outgoing.extend(g.senders().values().map(|sender| (sender.clone(), ServerMessage::Leave(player_id))));
+                    if g.paused_since().is_none() && !matches!(g.game().status(), GameStatus::Starting) {
+                        g.set_paused_since(Some(Instant::now()));
+                        outgoing.extend(g.senders().values().map(|sender| (sender.clone(), ServerMessage::PauseGame)));
                     }
-                    g.senders().values().cloned().collect()
+
+                    outgoing
                 };
 
-                for sender in senders {
-                    let _ = sender.send(ServerMessage::Leave(player_id)).await;
+                for (sender, message) in outgoing {
+                    sender.send(message).await.unwrap();
                 }
                 println!("{player_id} s'est déconnecté");
-
 
                 return;
             }
@@ -120,15 +123,27 @@ async fn join_phase(
 
             if let Ok((player_id, token)) = player_result {
                 let (tx, rx) = mpsc::channel(32);
-                {
+                let outgoing : Vec<(Sender<ServerMessage>, ServerMessage)> = {
+                    let mut outgoing : Vec<(Sender<ServerMessage>, ServerMessage)> = Vec::new();
                     let mut g = game_state.lock().unwrap();
                     g.senders_mut().insert(player_id, tx.clone());
+                    outgoing.extend(g.senders().values().map(|sender| (sender.clone(), ServerMessage::PlayerJoined(PlayerInfo::from((g.game().get_player(player_id).unwrap(), player_id))))));
+
                     if g.paused_since().is_some() && g.senders().len() == g.game().players().len() {
                         g.set_paused_since(None);
+                        outgoing.extend(g.senders().values().map(|sender| (sender.clone(), ServerMessage::ResumeGame)));
                     }
-                }
+                    outgoing
+                };
+
                 tx.send(ServerMessage::JoinGame(token)).await.unwrap();
+
+                for (sender, message) in outgoing {
+                    sender.send(message).await.unwrap();
+                }
+
                 Some((player_id, rx))
+
             } else {
                 let msg = ServerMessage::from(player_result.unwrap_err());
                 let mut json = serde_json::to_string(&msg).unwrap();
