@@ -14,9 +14,7 @@ pub(crate) fn apply(
     match messages {
         Ok(messages) => messages,
         Err(error) => {
-            let mut messages = Vec::new();
-            messages.push((player_id, ServerMessage::from(error)));
-            messages
+            vec![(player_id, ServerMessage::from(error))]
         }
     }
 }
@@ -100,7 +98,7 @@ fn build_messages(
         }
         ClientMessage::StartGame => {
             if player_id == PlayerId::new(0) {
-                let rolls = game_state.game().players().iter().map(|_| Roll::random()).collect();
+                let rolls : Vec<Roll> = game_state.game().players().iter().map(|_| Roll::random()).collect();
                 game_state.game_mut().set_players_order(&rolls)?;
                 let tiles = if game_state.random_board() {game_state.game().scenario().shuffled_terrains()} else {game_state.game().scenario().terrains().to_vec()};
                 game_state.game_mut().start(&tiles)?;

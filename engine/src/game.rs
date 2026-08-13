@@ -192,7 +192,7 @@ impl Game {
     }
 
 
-    pub fn set_players_order(&mut self, rolls: &Vec<Roll>) -> Result<(), GameError> {
+    pub fn set_players_order(&mut self, rolls: &[Roll]) -> Result<(), GameError> {
         self.check_status(&[StatusKind::Starting])?;
         if rolls.len() == self.players.len() {
             let best = rolls.iter().map(|r| r.value()).max().unwrap();

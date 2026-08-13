@@ -65,7 +65,7 @@ pub(crate) async fn handle(
                     if !matches!(g.game().status(), GameStatus::Starting) {
                         g.set_paused_since(Some(Instant::now()))
                     }
-                    g.senders().iter().map(|(_, tx)| tx.clone()).collect()
+                    g.senders().values().cloned().collect()
                 };
 
                 for sender in senders {
@@ -116,7 +116,7 @@ async fn join_phase(
             let player_result = {let mut g = game_state.lock().unwrap();
                 join_game(&mut g, token)
             };
-            
+
 
             if let Ok((player_id, token)) = player_result {
                 let (tx, rx) = mpsc::channel(32);
@@ -127,8 +127,9 @@ async fn join_phase(
                 tx.send(ServerMessage::JoinGame(token)).await.unwrap();
                 Some((player_id, rx))
             } else {
-                let msg = ServerMessage::from(ServerError::from(player_result.unwrap_err()));
-                let json = serde_json::to_string(&msg).unwrap();
+                let msg = ServerMessage::from(player_result.unwrap_err());
+                let mut json = serde_json::to_string(&msg).unwrap();
+                json.push('\n');
                 writer.write_all(json.as_bytes()).await.unwrap();
                 None
             }
@@ -136,7 +137,8 @@ async fn join_phase(
 
         _ => {
             let msg = ServerMessage::from(ServerError::InvalidMessageType);
-            let json = serde_json::to_string(&msg).unwrap();
+            let mut json = serde_json::to_string(&msg).unwrap();
+            json.push('\n');
             writer.write_all(json.as_bytes()).await.unwrap();
             None
         }

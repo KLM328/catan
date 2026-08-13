@@ -17,7 +17,7 @@ pub enum ClientMessage {
     RobberLocation(TileId),
     Roll,
     EndTurn,
-    Join {token : Option<Token>}, 
+    Join {token : Option<Token>},
     StartGame,
 }
 
@@ -129,7 +129,7 @@ impl From<(&Game, PlayerId)> for ServerMessage {
 
 impl From<ServerError> for ServerMessage {
     fn from(error: ServerError) -> Self {
-        ServerMessage::Error(ServerError::from(error))
+        ServerMessage::Error(error)
     }
 }
 
