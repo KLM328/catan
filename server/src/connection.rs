@@ -1,6 +1,7 @@
 use crate::dispatch::apply;
 use crate::state::GameState;
 use catan::{GameStatus, Player, PlayerId};
+use catan_protocol::ServerError;
 use catan_protocol::{ClientMessage, PlayerInfo, ServerMessage, Token};
 use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
@@ -9,8 +10,6 @@ use tokio::net::tcp::OwnedWriteHalf;
 use tokio::spawn;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{Receiver, Sender};
-use tokio::time::Instant;
-use catan_protocol::ServerError;
 
 pub(crate) async fn handle(
     socket: TcpStream,
@@ -33,8 +32,8 @@ pub(crate) async fn handle(
         }
     }
 
-    let (player_id, mut rx) = match join_phase(&line, &game_state, &mut writer).await {
-        Some(pair) => pair,
+    let (player_id, mut rx, tx) = match join_phase(&line, &game_state, &mut writer).await {
+        Some(triplet) => triplet,
         None => return,
     };
 
@@ -46,15 +45,6 @@ pub(crate) async fn handle(
         }
     });
 
-    let (tx, msg) = {
-        let g = game_state.lock().unwrap();
-        (
-            g.senders().get(&player_id).unwrap().clone(),
-            ServerMessage::from((g.game(), player_id)),
-        )
-    };
-    tx.send(msg).await.unwrap();
-
     loop {
         line.clear();
         match buf_reader.read_line(&mut line).await {
@@ -62,13 +52,21 @@ pub(crate) async fn handle(
                 let outgoing: Vec<(Sender<ServerMessage>, ServerMessage)> = {
                     let mut outgoing = Vec::new();
                     let mut g = game_state.lock().unwrap();
-                    g.senders_mut().remove(&player_id);
-                    outgoing.extend(g.senders().values().map(|sender| (sender.clone(), ServerMessage::Leave(player_id))));
-                    if g.paused_since().is_none() && !matches!(g.game().status(), GameStatus::Starting) {
-                        g.set_paused_since(Some(Instant::now()));
-                        outgoing.extend(g.senders().values().map(|sender| (sender.clone(), ServerMessage::PauseGame)));
-                    }
+                    g.unregister(player_id);
 
+                    outgoing.extend(
+                        g.senders()
+                            .values()
+                            .map(|sender| (sender.clone(), ServerMessage::Leave(player_id))),
+                    );
+                    if !matches!(g.game().status(), GameStatus::Starting) && g.is_paused()
+                    {
+                        outgoing.extend(
+                            g.senders()
+                                .values()
+                                .map(|sender| (sender.clone(), ServerMessage::PauseGame)),
+                        );
+                    }
                     outgoing
                 };
 
@@ -87,7 +85,9 @@ pub(crate) async fn handle(
                             let mut g = game_state.lock().unwrap();
                             apply(&mut g, player_id, message)
                                 .into_iter()
-                                .filter_map(|(id, msg)| g.senders().get(&id).map(|tx| (tx.clone(), msg)))
+                                .filter_map(|(id, msg)| {
+                                    g.senders().get(&id).map(|tx| (tx.clone(), msg))
+                                })
                                 .collect()
                         };
 
@@ -113,69 +113,56 @@ async fn join_phase(
     line: &str,
     game_state: &Arc<Mutex<GameState>>,
     writer: &mut OwnedWriteHalf,
-) -> Option<(PlayerId, Receiver<ServerMessage>)> {
+) -> Option<(PlayerId, Receiver<ServerMessage>, Sender<ServerMessage>)> {
     match serde_json::from_str(line) {
-        Ok(ClientMessage::Join { token }) => {
-            let player_result = {let mut g = game_state.lock().unwrap();
-                join_game(&mut g, token)
+        Ok(incoming_message) => {
+            let result = {
+                let mut g = game_state.lock().unwrap();
+                generate_message(incoming_message, &mut g)
             };
 
-
-            if let Ok((player_id, token)) = player_result {
-                let (tx, rx) = mpsc::channel(32);
-                let outgoing : Vec<(Sender<ServerMessage>, ServerMessage)> = {
-                    let mut outgoing : Vec<(Sender<ServerMessage>, ServerMessage)> = Vec::new();
-                    let mut g = game_state.lock().unwrap();
-                    g.senders_mut().insert(player_id, tx.clone());
-                    outgoing.extend(g.senders().values().map(|sender| (sender.clone(), ServerMessage::PlayerJoined(PlayerInfo::from((g.game().get_player(player_id).unwrap(), player_id))))));
-
-                    if g.paused_since().is_some() && g.senders().len() == g.game().players().len() {
-                        g.set_paused_since(None);
-                        outgoing.extend(g.senders().values().map(|sender| (sender.clone(), ServerMessage::ResumeGame)));
+            match result {
+                Ok((player_id, rx, tx, outgoing)) => {
+                    for (sender, msg) in outgoing {
+                        let _ = sender.send(msg).await;
                     }
-                    outgoing
-                };
-
-                tx.send(ServerMessage::JoinGame(token)).await.unwrap();
-
-                for (sender, message) in outgoing {
-                    sender.send(message).await.unwrap();
+                    Some((player_id, rx, tx))
                 }
-
-                Some((player_id, rx))
-
-            } else {
-                let msg = ServerMessage::from(player_result.unwrap_err());
-                let mut json = serde_json::to_string(&msg).unwrap();
-                json.push('\n');
-                writer.write_all(json.as_bytes()).await.unwrap();
-                None
+                Err(e) => {
+                    let msg = ServerMessage::from(e);
+                    let mut json = serde_json::to_string(&msg).unwrap();
+                    json.push('\n');
+                    writer.write_all(json.as_bytes()).await.unwrap();
+                    None
+                }
             }
         }
-
-        _ => {
-            let msg = ServerMessage::from(ServerError::InvalidMessageType);
+        Err(_) => {
+            let msg = ServerMessage::from(ServerError::InvalidMessageFormat);
             let mut json = serde_json::to_string(&msg).unwrap();
             json.push('\n');
             writer.write_all(json.as_bytes()).await.unwrap();
             None
         }
     }
+
+
 }
 
-fn join_game(game_state: &mut GameState, token : Option<Token>) -> Result<(PlayerId, Token), ServerError> {
+fn join_game(
+    game_state: &mut GameState,
+    token: Option<Token>,
+) -> Result<(PlayerId, Token), ServerError> {
     match token {
-        Some(token) => {
-            match game_state.tokens().get(&token) {
-                Some(&player_id) => {
-                    if let Some(_) = game_state.senders().get(&player_id) {
-                        Err(ServerError::PlayerIsAlreadyConnected)
-                    } else {
-                        Ok((player_id, token))
-                    }
+        Some(token) => match game_state.tokens().get(&token) {
+            Some(&player_id) => {
+                if let Some(_) = game_state.senders().get(&player_id) {
+                    Err(ServerError::PlayerIsAlreadyConnected)
+                } else {
+                    Ok((player_id, token))
                 }
-                None => Err(ServerError::InvalidToken)
             }
+            None => Err(ServerError::InvalidToken),
         },
         None => {
             let color = game_state.game().next_player_color()?;
@@ -184,5 +171,43 @@ fn join_game(game_state: &mut GameState, token : Option<Token>) -> Result<(Playe
             game_state.tokens_mut().insert(token, player_id);
             Ok((player_id, token))
         }
+    }
+}
+
+fn generate_message(
+    incoming_message: ClientMessage,
+    game_state: &mut GameState,
+) -> Result<(PlayerId, Receiver<ServerMessage>, Sender<ServerMessage>, Vec<(Sender<ServerMessage>, ServerMessage)>), ServerError> {
+    let mut outgoing = Vec::new();
+
+    match incoming_message {
+        ClientMessage::Join { token } => {
+            let (player_id, token) = join_game(game_state, token)?;
+            let (tx, rx) = mpsc::channel(32);
+            game_state.register(player_id, tx.clone())?;
+            outgoing.push((tx.clone(), ServerMessage::JoinGame(token)));
+            outgoing.push((tx.clone(), ServerMessage::from((game_state.game(), player_id))));
+            outgoing.extend(game_state.senders().iter().filter(|&(&p, _)| p != player_id).map(|(_, sender)| {
+                (
+                    sender.clone(),
+                    ServerMessage::PlayerJoined(PlayerInfo::from((
+                        game_state.game().get_player(player_id).unwrap(),
+                        player_id,
+                    ))),
+                )
+            }));
+            if !(matches!(game_state.game().status(), GameStatus::Starting) || game_state.is_paused()) {
+                outgoing.extend(
+                    game_state
+                        .senders()
+                        .values()
+                        .map(|sender| (sender.clone(), ServerMessage::ResumeGame)),
+                );
+            }
+
+            Ok((player_id, rx, tx, outgoing))
+        }
+
+        _ => Err(ServerError::InvalidMessageType),
     }
 }

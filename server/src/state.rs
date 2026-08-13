@@ -1,5 +1,5 @@
 use catan::{Game, GameError, PlayerId};
-use catan_protocol::{PlayerInfo, ServerMessage, Token};
+use catan_protocol::{PlayerInfo, ServerError, ServerMessage, Token};
 use std::collections::HashMap;
 use tokio::sync::mpsc::Sender;
 use tokio::time::Instant;
@@ -30,11 +30,11 @@ impl GameState {
     pub(crate) fn game_mut(&mut self) -> &mut Game {
         &mut self.game
     }
-    
+
     pub(crate) fn tokens(&self) -> &HashMap<Token, PlayerId> {
         &self.tokens
     }
-    
+
     pub(crate) fn tokens_mut(&mut self) -> &mut HashMap<Token, PlayerId> {
         &mut self.tokens
     }
@@ -60,5 +60,35 @@ impl GameState {
 
     pub(crate) fn player_info(&self, player_id: PlayerId) -> Result<PlayerInfo, GameError> {
         Ok(PlayerInfo::from((self.game.get_player(player_id)? , player_id)))
+    }
+
+    pub(crate) fn register(&mut self, player: PlayerId, tx: Sender<ServerMessage>) -> Result<(), ServerError> {
+        if self.senders.contains_key(&player) {
+            Err(ServerError::PlayerIsAlreadyConnected)
+        } else {
+            self.senders.insert(player, tx);
+            if self.is_paused() && self.senders.len() == self.game.players().len() {
+                self.resume();
+            }
+            Ok(())
+        }
+    }
+    
+    fn pause(&mut self){
+        self.paused_since = Some(Instant::now());
+    }
+    
+    fn resume(&mut self){
+        self.paused_since = None;
+    }
+    pub(crate) fn unregister(&mut self, player: PlayerId) {
+        self.senders.remove(&player);
+        if self.is_paused() {
+            self.pause()
+        }
+    }
+
+    pub(crate) fn is_paused(&self) -> bool {
+        self.paused_since.is_some()
     }
 }
