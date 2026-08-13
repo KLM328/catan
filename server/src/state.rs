@@ -1,4 +1,4 @@
-use catan::{Game, GameError, Player, PlayerId};
+use catan::{Game, GameError, GameStatus, Player, PlayerId};
 use catan_protocol::{PlayerInfo, ServerError, ServerMessage, Token};
 use std::collections::HashMap;
 use tokio::sync::mpsc::Sender;
@@ -66,7 +66,13 @@ impl GameState {
     }
     pub(crate) fn unregister(&mut self, player: PlayerId) {
         self.senders.remove(&player);
-        if self.is_paused() {
+        if matches!(self.game.status(), GameStatus::Starting) {
+            if let Some((&token, _)) = self.tokens.iter().find(|&(_, &p)| p == player) {
+                self.tokens.remove(&token);
+            }
+            self.game.remove_player(player).unwrap();
+        }
+        if !self.is_paused() && self.connected_players().len() < self.game.players().len() {
             self.pause()
         }
     }

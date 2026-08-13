@@ -96,6 +96,13 @@ impl Game {
         }
     }
 
+    pub fn remove_player(&mut self, player_id : PlayerId) -> Result<(), GameError>{
+        self.check_status(&[StatusKind::Starting])?;
+        self.is_player(player_id)?;
+        self.players.remove(player_id.value());
+        Ok(())
+    }
+
     pub fn next_player_color(&self) -> Result<PlayerColor, GameError> {
         PlayerColor::ALL.into_iter().find(|&color| self.players.iter().all(|p| p.color() != color)).ok_or(GameError::GameIsFull)
     }
