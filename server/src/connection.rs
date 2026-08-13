@@ -149,7 +149,13 @@ fn join_game(game_state: &mut GameState, token : Option<Token>) -> Result<(Playe
     match token {
         Some(token) => {
             match game_state.tokens().get(&token) {
-                Some(&player_id) => Ok((player_id, token)),
+                Some(&player_id) => {
+                    if let Some(_) = game_state.senders().get(&player_id) {
+                        Err(ServerError::PlayerIsAlreadyConnected)
+                    } else {
+                        Ok((player_id, token))
+                    }
+                }
                 None => Err(ServerError::InvalidToken)
             }
         },
