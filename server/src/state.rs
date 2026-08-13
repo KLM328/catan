@@ -35,7 +35,7 @@ impl GameState {
     pub(crate) fn senders(&self) -> &HashMap<PlayerId, Sender<ServerMessage>> {
         &self.senders
     }
-    
+
 
     pub(crate) fn random_board(&self) -> bool {
         self.random_board
@@ -56,11 +56,11 @@ impl GameState {
             Ok(())
         }
     }
-    
+
     fn pause(&mut self){
         self.paused_since = Some(Instant::now());
     }
-    
+
     fn resume(&mut self){
         self.paused_since = None;
     }
@@ -74,7 +74,7 @@ impl GameState {
     pub(crate) fn is_paused(&self) -> bool {
         self.paused_since.is_some()
     }
-    
+
     pub(crate) fn new_player(&mut self) -> Result<(PlayerId, Token), ServerError> {
         let color = self.game.next_player_color()?;
         let player_id = self.game.add_player(Player::new(color))?;
@@ -82,12 +82,14 @@ impl GameState {
         self.tokens.insert(token, player_id);
         Ok((player_id, token))
     }
-    
+
     pub(crate) fn player_by_token(&self, token: Token) -> Option<PlayerId> {
         self.tokens.get(&token).copied()
     }
 
     pub(crate) fn connected_players(&self) -> Vec<PlayerId> {
-        self.senders.keys().copied().collect()
+        let mut players : Vec<PlayerId> = self.senders.keys().copied().collect();
+        players.sort_by_key(|&p| p.value());
+        players
     }
 }
