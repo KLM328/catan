@@ -123,6 +123,9 @@ async fn join_phase(
                 {
                     let mut g = game_state.lock().unwrap();
                     g.senders_mut().insert(player_id, tx.clone());
+                    if g.paused_since().is_some() && g.senders().len() == g.game().players().len() {
+                        g.set_paused_since(None);
+                    }
                 }
                 tx.send(ServerMessage::JoinGame(token)).await.unwrap();
                 Some((player_id, rx))
