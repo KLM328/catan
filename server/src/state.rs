@@ -30,11 +30,7 @@ impl GameState {
     pub(crate) fn game_mut(&mut self) -> &mut Game {
         &mut self.game
     }
-
-
-    pub(crate) fn senders(&self) -> &HashMap<PlayerId, Sender<ServerMessage>> {
-        &self.senders
-    }
+    
 
 
     pub(crate) fn random_board(&self) -> bool {
@@ -97,5 +93,13 @@ impl GameState {
         let mut players : Vec<PlayerId> = self.senders.keys().copied().collect();
         players.sort_by_key(|&p| p.value());
         players
+    }
+
+    pub(crate) fn sender(&self, player: PlayerId) -> Option<Sender<ServerMessage>>{
+        self.senders.iter().find(|&(&p, _)| p == player).map(|(_, s)| s.clone())
+    }
+    
+    pub(crate) fn broadcast(&self, message: ServerMessage) -> Vec<(Sender<ServerMessage>, ServerMessage)>{
+        self.connected_players().iter().map(|&p| (self.sender(p).unwrap(), message.clone())).collect()
     }
 }

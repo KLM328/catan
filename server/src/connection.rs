@@ -54,18 +54,9 @@ pub(crate) async fn handle(
                     let mut g = game_state.lock().unwrap();
                     g.unregister(player_id);
 
-                    outgoing.extend(
-                        g.senders()
-                            .values()
-                            .map(|sender| (sender.clone(), ServerMessage::Leave(player_id))),
-                    );
-                    if !matches!(g.game().status(), GameStatus::Starting) && g.is_paused()
-                    {
-                        outgoing.extend(
-                            g.senders()
-                                .values()
-                                .map(|sender| (sender.clone(), ServerMessage::PauseGame)),
-                        );
+                    outgoing.extend(g.broadcast(ServerMessage::Leave(player_id)));
+                    if !matches!(g.game().status(), GameStatus::Starting) && g.is_paused() {
+                        outgoing.extend(g.broadcast(ServerMessage::PauseGame));
                     }
                     outgoing
                 };
@@ -84,11 +75,6 @@ pub(crate) async fn handle(
                         let outgoing: Vec<(Sender<ServerMessage>, ServerMessage)> = {
                             let mut g = game_state.lock().unwrap();
                             apply(&mut g, player_id, message)
-                                .into_iter()
-                                .filter_map(|(id, msg)| {
-                                    g.senders().get(&id).map(|tx| (tx.clone(), msg))
-                                })
-                                .collect()
                         };
 
                         for (tx, msg) in outgoing {
@@ -145,8 +131,6 @@ async fn join_phase(
             None
         }
     }
-
-
 }
 
 fn join_game(
@@ -164,16 +148,22 @@ fn join_game(
             }
             None => Err(ServerError::InvalidToken),
         },
-        None => {
-            game_state.new_player()
-        }
+        None => game_state.new_player(),
     }
 }
 
 fn generate_message(
     incoming_message: ClientMessage,
     game_state: &mut GameState,
-) -> Result<(PlayerId, Receiver<ServerMessage>, Sender<ServerMessage>, Vec<(Sender<ServerMessage>, ServerMessage)>), ServerError> {
+) -> Result<
+    (
+        PlayerId,
+        Receiver<ServerMessage>,
+        Sender<ServerMessage>,
+        Vec<(Sender<ServerMessage>, ServerMessage)>,
+    ),
+    ServerError,
+> {
     let mut outgoing = Vec::new();
 
     match incoming_message {
@@ -182,23 +172,29 @@ fn generate_message(
             let (tx, rx) = mpsc::channel(32);
             game_state.register(player_id, tx.clone())?;
             outgoing.push((tx.clone(), ServerMessage::JoinGame(token)));
-            outgoing.push((tx.clone(), ServerMessage::from((game_state.game(), player_id))));
-            outgoing.extend(game_state.senders().iter().filter(|&(&p, _)| p != player_id).map(|(_, sender)| {
-                (
-                    sender.clone(),
-                    ServerMessage::PlayerJoined(PlayerInfo::from((
-                        game_state.game().get_player(player_id).unwrap(),
-                        player_id,
-                    ))),
-                )
-            }));
-            if !(matches!(game_state.game().status(), GameStatus::Starting) || game_state.is_paused()) {
-                outgoing.extend(
-                    game_state
-                        .senders()
-                        .values()
-                        .map(|sender| (sender.clone(), ServerMessage::ResumeGame)),
-                );
+            outgoing.push((
+                tx.clone(),
+                ServerMessage::from((game_state.game(), player_id)),
+            ));
+            outgoing.extend(
+                game_state
+                    .connected_players()
+                    .iter()
+                    .filter(|&&p| p != player_id)
+                    .map(|&p| {
+                        (
+                            game_state.sender(player_id).unwrap(),
+                            ServerMessage::PlayerJoined(PlayerInfo::from((
+                                game_state.game().get_player(player_id).unwrap(),
+                                player_id,
+                            ))),
+                        )
+                    }),
+            );
+            if !(matches!(game_state.game().status(), GameStatus::Starting)
+                || game_state.is_paused())
+            {
+                outgoing.extend(game_state.broadcast(ServerMessage::ResumeGame));
             }
 
             Ok((player_id, rx, tx, outgoing))
