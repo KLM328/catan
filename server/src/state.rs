@@ -30,7 +30,7 @@ impl GameState {
     pub(crate) fn game_mut(&mut self) -> &mut Game {
         &mut self.game
     }
-    
+
 
     pub(crate) fn senders(&self) -> &HashMap<PlayerId, Sender<ServerMessage>> {
         &self.senders
@@ -85,5 +85,9 @@ impl GameState {
     
     pub(crate) fn player_by_token(&self, token: Token) -> Option<PlayerId> {
         self.tokens.get(&token).copied()
+    }
+
+    pub(crate) fn connected_players(&self) -> Vec<PlayerId> {
+        self.senders.keys().copied().collect()
     }
 }

@@ -156,7 +156,7 @@ fn join_game(
     match token {
         Some(token) => match game_state.player_by_token(token) {
             Some(player_id) => {
-                if let Some(_) = game_state.senders().get(&player_id) {
+                if game_state.connected_players().contains(&player_id) {
                     Err(ServerError::PlayerIsAlreadyConnected)
                 } else {
                     Ok((player_id, token))

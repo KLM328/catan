@@ -24,7 +24,7 @@ fn broadcast(
     message: ServerMessage,
     messages: &mut Vec<(PlayerId, ServerMessage)>,
 ) {
-    for &id in game_state.senders().keys() {
+    for id in game_state.connected_players() {
         messages.push((id, message.clone()))
     }
 }
@@ -35,7 +35,7 @@ fn build_messages(
     msg: ClientMessage,
 ) -> Result<Vec<(PlayerId, ServerMessage)>, ServerError> {
     let mut messages = Vec::new();
-    if game_state.senders().len() < game_state.game().players().len() {
+    if game_state.connected_players().len() < game_state.game().players().len() {
         return Err(ServerError::GamePaused)
     }
     match msg {
@@ -61,7 +61,7 @@ fn build_messages(
             Some(victim_id) => {
                 let resource = game_state.game().get_player(victim_id)?.hand().random_pick();
                 game_state.game_mut().steal(player_id, Some(Steal::new(victim_id, resource)))?;
-                for &id in game_state.senders().keys() {
+                for id in game_state.connected_players() {
                     if id == victim_id || id == player_id {
                         messages.push((id, ServerMessage::StealConfirmation {
                             robber: game_state.player_info(player_id)?,
@@ -103,7 +103,7 @@ fn build_messages(
                 let tiles = if game_state.random_board() {game_state.game().scenario().shuffled_terrains()} else {game_state.game().scenario().terrains().to_vec()};
                 game_state.game_mut().start(&tiles)?;
                 broadcast(game_state, ServerMessage::StartGame(rolls), &mut messages);
-                for &player_id in game_state.senders().keys() {
+                for player_id in game_state.connected_players() {
                     messages.push((player_id, ServerMessage::from((game_state.game(), player_id)) ))
                 }
             }
