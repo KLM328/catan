@@ -77,7 +77,7 @@ pub enum ServerMessage {
         players: Vec<PlayerInfo>,
         scenario: Scenario,
     },
-    StartGame(Vec<Roll>),
+    StartGame(Vec<(PlayerId, Roll)>),
     Error(ServerError),
     JoinGame(Token),
     PauseGame,
@@ -91,10 +91,9 @@ impl From<(&Game, PlayerId)> for ServerMessage {
                 players: game
                     .players()
                     .iter()
-                    .enumerate()
-                    .map(|(index, p)| PlayerInfo {
+                    .map(|(id, p)| PlayerInfo {
                         color: p.color(),
-                        id: PlayerId::new(index),
+                        id : id.clone(),
                         hand_count: 0,
                     })
                     .collect(),
@@ -111,10 +110,9 @@ impl From<(&Game, PlayerId)> for ServerMessage {
                     players: game
                         .players()
                         .iter()
-                        .enumerate()
-                        .map(|(index, p)| PlayerInfo {
+                        .map(|(id, p)| PlayerInfo {
                             color: p.color(),
-                            id: PlayerId::new(index),
+                            id : id.clone(),
                             hand_count: p.hand().count(),
                         })
                         .collect(),
@@ -216,8 +214,8 @@ mod tests {
                 player_id: PlayerId::new(0),
             },
             ServerMessage::StartGame(vec![
-                Roll::new(4, 6).unwrap(),
-                Roll::new(4, 5).unwrap(),
+                (PlayerId::new(0), Roll::new(4, 6).unwrap()),
+                (PlayerId::new(1), Roll::new(4, 5).unwrap()),
             ]),
             ServerMessage::from(ServerError::from(GameError::InvalidGameStatus))
         ];

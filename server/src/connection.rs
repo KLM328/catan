@@ -183,7 +183,7 @@ fn generate_message(
                     .filter(|&&p| p != player_id)
                     .map(|&p| {
                         (
-                            game_state.sender(player_id).unwrap(),
+                            game_state.sender(p).unwrap(),
                             ServerMessage::PlayerJoined(PlayerInfo::from((
                                 game_state.game().get_player(player_id).unwrap(),
                                 player_id,

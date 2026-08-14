@@ -39,7 +39,7 @@ impl CatanApp {
 
 
         while let Err(GameError::TiedRolls) =
-            game.set_players_order(&[Roll::random(), Roll::random(), Roll::random()])
+            game.set_players_order(&game.sorted_player().iter().map(|&(id, _)| (id, Roll::random())).collect::<Vec<(PlayerId, Roll)>>())
         {}
 
         game.start(&terrains).expect("mise en place du plateau");

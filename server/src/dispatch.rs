@@ -20,16 +20,6 @@ pub(crate) fn apply(
     }
 }
 
-fn broadcast(
-    game_state: &GameState,
-    message: ServerMessage,
-    messages: &mut Vec<(PlayerId, ServerMessage)>,
-) {
-    for id in game_state.connected_players() {
-        messages.push((id, message.clone()))
-    }
-}
-
 fn build_messages(
     game_state: &mut GameState,
     player_id: PlayerId,
@@ -99,7 +89,7 @@ fn build_messages(
         }
         ClientMessage::StartGame => {
             if player_id == PlayerId::new(0) {
-                let rolls : Vec<Roll> = game_state.game().players().iter().map(|_| Roll::random()).collect();
+                let rolls : Vec<(PlayerId, Roll)> = game_state.game().sorted_player().iter().map(|&(id, _)| (id, Roll::random())).collect();
                 game_state.game_mut().set_players_order(&rolls)?;
                 let tiles = if game_state.random_board() {game_state.game().scenario().shuffled_terrains()} else {game_state.game().scenario().terrains().to_vec()};
                 game_state.game_mut().start(&tiles)?;

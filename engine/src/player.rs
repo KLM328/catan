@@ -27,7 +27,7 @@ impl PlayerColor {
     pub const ALL : [Self; 6] = [Self::Red, Self::Blue, Self::White, Self::Orange, Self::Green, Self::Brown];
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Ord, PartialOrd)]
 pub struct PlayerId(usize);
 impl PlayerId {
     pub fn new(id: usize) -> Self {
