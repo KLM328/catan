@@ -88,7 +88,7 @@ fn build_messages(
             messages.extend(game_state.broadcast(ServerMessage::NextPlayer(game_state.player_info(player_id)?)));
         }
         ClientMessage::StartGame => {
-            if player_id == PlayerId::new(0) {
+            if player_id == game_state.game().sorted_player()[0].0 {
                 let rolls : Vec<(PlayerId, Roll)> = game_state.game().sorted_player().iter().map(|&(id, _)| (id, Roll::random())).collect();
                 game_state.game_mut().set_players_order(&rolls)?;
                 let tiles = if game_state.random_board() {game_state.game().scenario().shuffled_terrains()} else {game_state.game().scenario().terrains().to_vec()};
