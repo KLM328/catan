@@ -86,6 +86,7 @@ impl Game {
     }
 
     pub fn add_player(&mut self, player : Player) -> Result<PlayerId, GameError>{
+        self.check_status(&[StatusKind::Starting])?;
         if self.players.len() >= self.scenario.max_player() {
             Err(GameError::GameIsFull)
         } else {

@@ -20,22 +20,28 @@ pub(crate) async fn handle(
     let mut buf_reader = BufReader::take(BufReader::new(reader), 2048);
     let mut line = String::new();
 
-    match buf_reader.read_line(&mut line).await {
-        Ok(0) => {
-            println!("{addr} s'est déconnecté avant de rejoindre");
-            return;
+    let mut join_result = None;
+    while let None = join_result {
+        line.clear();
+        match buf_reader.read_line(&mut line).await {
+            Ok(0) => {
+                println!("{addr} s'est déconnecté avant de rejoindre");
+                return;
+            }
+            Ok(_) => {}
+            Err(e) => {
+                eprintln!("Erreur de lecture depuis {addr} : {e}");
+                return;
+            }
         }
-        Ok(_) => {}
-        Err(e) => {
-            eprintln!("Erreur de lecture depuis {addr} : {e}");
-            return;
-        }
+
+        join_result = match join_phase(&line, &game_state, &mut writer).await {
+            Some(triplet) => Some(triplet),
+            None => continue,
+        };
     }
 
-    let (player_id, mut rx, tx) = match join_phase(&line, &game_state, &mut writer).await {
-        Some(triplet) => triplet,
-        None => return,
-    };
+    let (player_id, mut rx, tx) = join_result.unwrap();
 
     spawn(async move {
         while let Some(msg) = rx.recv().await {

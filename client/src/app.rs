@@ -1,16 +1,17 @@
-use crate::panels::{actions, board, dice, end, hand, infos, message, next_player};
-use crate::scenes::playing;
-use crate::{BuildMode, GameView, dispatch};
+use crate::panels::message;
+use crate::scenes::{connecting, lobby, playing, menu};
+use crate::{dispatch, BuildMode, GameView};
 use catan::{
-    EdgeId, Game, GameError, GameStatus, Player, PlayerColor, PlayerId, ResourceCounts, Roll,
-    Scenario, TileId, VertexId,
+    ResourceCounts, Roll
+    ,
 };
-use catan_protocol::{ClientMessage, GameSnapshot, PlayerInfo, ServerMessage};
+use catan_protocol::{ClientMessage, PlayerInfo, ServerMessage};
 use eframe::egui;
 use tokio::sync::mpsc::error::TrySendError;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 pub(crate) enum AppState {
+    Menu,
     Connecting,
     Lobby { players: Vec<PlayerInfo> },
     Playing(GameView),
@@ -70,6 +71,10 @@ impl UiState {
     pub(crate) fn message(&self) -> Option<(String, f64)> {
         self.message.clone()
     }
+
+    pub(crate) fn set_message(&mut self, message: String) {
+        self.message = Some((message, 10.0));
+    }
 }
 
 impl Default for UiState {
@@ -94,7 +99,7 @@ pub(crate) struct CatanApp {
 impl CatanApp {
     pub(crate) fn new(tx: Sender<ClientMessage>, rx: Receiver<ServerMessage>) -> Self {
         Self {
-            state: AppState::Connecting,
+            state: AppState::Menu,
             ui: UiState::default(),
             tx,
             rx,
@@ -133,8 +138,6 @@ impl eframe::App for CatanApp {
         let mut messages = Vec::new();
         let ctx = ui.ctx().clone();
 
-        // Taille physique de la fenêtre, indépendante du zoom courant :
-        // screen_rect rétrécit quand pixels_per_point augmente, le produit est stable.
         let physical_h = ctx.content_rect().height() * ctx.pixels_per_point();
         let native_ppp = ctx.native_pixels_per_point().unwrap_or(1.0);
         let target = (physical_h / native_ppp / 1080.0).clamp(0.5, 2.0);
@@ -150,9 +153,16 @@ impl eframe::App for CatanApp {
         }
 
         match &self.state {
-            AppState::Connecting => todo!(),
-            AppState::Lobby { .. } => todo!(),
+            AppState::Menu => {
+                menu::show(ui, &mut self.state, &mut messages);
+            }
+            AppState::Connecting => {connecting::show(ui);
+            }
+            AppState::Lobby { players } => {
+                lobby::show(ui, &self.ui, players, &mut messages);
+            },
             AppState::Playing(view) => playing::show(ui, view, &mut self.ui, &mut messages),
+
         }
 
         message::show(ui, &self.ui);
