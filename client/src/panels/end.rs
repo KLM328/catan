@@ -1,11 +1,10 @@
-use crate::{cell, player_disc, player_color};
-use catan::{BuildingKind, Game, GameStatus, Player, PlayerColor, PlayerId};
+use crate::game_view::GameView;
+use crate::{cell, player_color, player_disc};
+use catan::{BuildingKind, GameStatus, PlayerColor, PlayerId};
+use catan_protocol::PlayerInfo;
 use eframe::egui;
 use eframe::egui::{Color32, Sense, Ui};
 use std::cmp::Reverse;
-use catan_protocol::PlayerInfo;
-use log::warn;
-use crate::game_view::GameView;
 
 pub(crate) fn show(ui: &mut Ui, game: &GameView) {
     const WIDTH: f32 = 700.0;
@@ -114,8 +113,8 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView) {
                             ui,
                             egui::RichText::new(game.score(player).to_string()).size(20.0), //les scores sont faux, il faudra envoyer les infos correcte via un message server
                         );
-                        todo!("récuparation des scores finaux depuis le serveur");
                         ui.end_row();
+                        todo!("récuparation des scores finaux depuis le serveur");
                     }
                 });
             ui.add_space(10.0);

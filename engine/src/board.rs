@@ -1,7 +1,7 @@
 use crate::{ConnectedEdges, EdgeId, PlayerId, Resource, ResourceCounts};
 use crate::{Roll, TileId, Topology, VertexId};
-use std::fmt;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 mod building;
 mod production;
@@ -418,14 +418,36 @@ impl Board {
             .filter_map(|(i, _)| self.tiles()[i].resource())
             .collect()
     }
+
+    pub fn steal_victims(&self, player_id: PlayerId) -> Vec<PlayerId> {
+
+
+        let buildings: Vec<Building> = self.topology().tile_vertices()
+            [self.robber().value()]
+            .iter()
+            .map(|&v| self.buildings()[v.value()])
+            .filter(|&o| o.is_some())
+            .flatten()
+            .collect();
+
+        let mut victims: Vec<PlayerId> = buildings
+            .iter()
+            .map(|b| b.owner())
+            .filter(|victims_id: &PlayerId| victims_id.value() != player_id.value())
+            .collect();
+
+        victims.sort_by_key(|p| p.value());
+        victims.dedup();
+        victims
+    }
 }
 
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use crate::NumberToken;
     use crate::board::production::{Gain, Production};
     use crate::player::PlayerId;
+    use crate::NumberToken;
 
     pub(crate) fn init_board_without_buildings() -> Board {
         let topology = Topology::test_topology();

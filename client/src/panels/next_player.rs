@@ -1,5 +1,5 @@
 use crate::{theme, UiAction, hand_over_button, player_color};
-use catan::{Game, GameStatus};
+use catan::{GameStatus};
 use eframe::egui;
 use eframe::egui::{Align2, Ui};
 use crate::game_view::GameView;

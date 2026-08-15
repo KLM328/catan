@@ -1,4 +1,4 @@
-use catan::{Board, Building, Cost, GameError, GameStatus, Hand, PlayerId, ResourceError};
+use catan::{Board, Cost, GameStatus, Hand, PlayerId, ResourceError};
 use catan_protocol::{GameSnapshot, PlayerInfo};
 
 pub(crate) struct GameView {
@@ -46,31 +46,9 @@ impl GameView {
     pub(crate) fn score(&self, player: &PlayerInfo) -> u8 {
         self.board.buildings().iter().flatten().filter(|&&b| b.owner() == player.id).map(|&b| b.kind().points()).sum()
     }
-    
+
     pub(crate) fn status(&self) -> &GameStatus {
         &self.status
-    }
-
-    pub(crate) fn steal_victims(&self, player_id: PlayerId) -> Result<Vec<PlayerId>, GameError>{
-
-        let buildings: Vec<Building> = self.board.topology().tile_vertices()
-            [self.board.robber().value()]
-            .iter()
-            .map(|&v| self.board.buildings()[v.value()])
-            .filter(|&o| o.is_some())
-            .flatten()
-            .collect();
-
-        let mut victims: Vec<PlayerId> = buildings
-            .iter()
-            .map(|b| b.owner())
-            .filter(|victims_id: &PlayerId| victims_id.value() != player_id.value())
-            .filter(|&p| self.get_player(p).unwrap().hand_count() > 0)
-            .collect();
-
-        victims.sort_by_key(|p| p.value());
-        victims.dedup();
-        Ok(victims)
     }
 
     pub fn get_next_player(&self) -> PlayerId {
@@ -80,14 +58,14 @@ impl GameView {
     pub fn can_pay(&self, cost : &Cost) -> Result<(), ResourceError> {
         self.my_hand.can_pay(cost)
     }
-    
+
     pub(crate) fn my_hand(&self) -> &Hand {
         &self.my_hand
     }
-    
+
     pub(crate) fn my_id(&self) -> PlayerId {
         self.my_id
     }
-    
+
 
 }

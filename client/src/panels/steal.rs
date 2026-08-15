@@ -1,6 +1,6 @@
 use eframe::egui;
 use eframe::egui::Ui;
-use catan::{Game, GameStatus, PlayerColor, PlayerId, Steal};
+use catan::{GameStatus, PlayerColor, PlayerId};
 use crate::UiAction;
 use crate::{player_color, disc_button};
 use crate::game_view::GameView;
@@ -18,7 +18,7 @@ pub(crate) fn show(ui : &mut Ui, game : &GameView) -> Vec<UiAction>{
         // 1. On extrait les données AVANT le closure
         let mut chosen: StealChoice = StealChoice::Pending;
 
-        if let Ok(victims) = game.steal_victims(game.current_player()) {
+        let victims : Vec<PlayerId> = game.board().steal_victims(game.my_id()).into_iter().filter(|&p| game.get_player(p).is_some_and(|p| p.hand_count() > 0)).collect();
             const DISC_W: f32 = 78.0;
             const GAP: f32 = 10.0;
 
@@ -62,11 +62,10 @@ pub(crate) fn show(ui : &mut Ui, game : &GameView) -> Vec<UiAction>{
                     }
                 });
             });
-        }
 
         let steal = match chosen {
             StealChoice::Nobody => None,
-            StealChoice::Victim(victim) => todo!(),
+            StealChoice::Victim(victim) => Some(victim),
             StealChoice::Pending => return Vec::new(),
         };
         actions.push(UiAction::Steal(steal));

@@ -1,4 +1,4 @@
-use catan::{Board, Building, EdgeId, Game, GameStatus, Hand, Player, PlayerColor, PlayerId, ResourceCounts, Roll, RollOutcome, Scenario, Tile, TileId, VertexId};
+use catan::{Board, EdgeId, Game, GameStatus, Hand, Player, PlayerColor, PlayerId, ResourceCounts, Roll, RollOutcome, Scenario, TileId, VertexId};
 use serde::{Deserialize, Serialize};
 
 mod server_error;
@@ -41,11 +41,11 @@ impl PlayerInfo {
     pub fn color(&self) -> PlayerColor {
         self.color
     }
-    
+
     pub fn id(&self) -> PlayerId {
         self.id
     }
-    
+
     pub fn hand_count(&self) -> u8 {
         self.hand_count
     }
@@ -252,11 +252,11 @@ mod tests {
         let terrains : Vec<Terrain> = game.scenario().terrains().iter().copied().collect();
 
         game.start(&terrains).unwrap();
-        
-        
+
+
         let game_view = ServerMessage::Sync(
-        
-            
+
+
             GameSnapshot{
                 scenario: Scenario::standard(),
                 board : game.board().unwrap().clone(),

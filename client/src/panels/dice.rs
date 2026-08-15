@@ -1,5 +1,5 @@
 use crate::{draw_die, theme, UiAction};
-use catan::{Game, GameStatus, Roll};
+use catan::{GameStatus, Roll};
 use eframe::egui;
 use eframe::egui::{Align2, Color32, Sense, Ui};
 use crate::game_view::GameView;

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 pub use game_error::GameError;
 
 use crate::board::BuildingKind;
-use crate::{Board, Building, Cost, EdgeId, Player, PlayerColor, PlayerId, Production, ResourceCounts, Roll, Scenario, Steal, Terrain, TileId, VertexId};
+use crate::{Board, Cost, EdgeId, Player, PlayerColor, PlayerId, Production, ResourceCounts, Roll, Scenario, Steal, Terrain, TileId, VertexId};
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub(crate) enum StatusKind {
@@ -494,36 +494,11 @@ impl Game {
         Ok(())
     }
 
-    pub fn steal_victims(&self, player_id: PlayerId) -> Result<Vec<PlayerId>, GameError>{
-        self.check_status(&[StatusKind::AwaitingSteal])?;
-        self.check_player(player_id)?;
-
-        let board = self.board()?;
-
-        let buildings: Vec<Building> = board.topology().tile_vertices()
-            [board.robber().value()]
-            .iter()
-            .map(|&v| board.buildings()[v.value()])
-            .filter(|&o| o.is_some())
-            .flatten()
-            .collect();
-
-        let mut victims: Vec<PlayerId> = buildings
-            .iter()
-            .map(|b| b.owner())
-            .filter(|victims_id: &PlayerId| victims_id.value() != player_id.value())
-            .filter(|&p| !self.get_player(p).unwrap().hand().is_empty())
-            .collect();
-
-        victims.sort_by_key(|p| p.value());
-        victims.dedup();
-        Ok(victims)
-    }
 
     pub fn steal(&mut self, player_id: PlayerId, steal: Option<Steal>) -> Result<(), GameError> {
         self.check_status(&[StatusKind::AwaitingSteal])?;
         self.check_player(player_id)?;
-        let victims = self.steal_victims(player_id)?;
+        let victims : Vec<PlayerId> = self.board()?.steal_victims(player_id).into_iter().filter(|&p| !self.get_player(p).unwrap().hand().is_empty()).collect();
 
         match steal {
             None => {

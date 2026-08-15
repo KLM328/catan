@@ -1,6 +1,6 @@
 use eframe::egui;
 use eframe::egui::{Align2, Color32, FontId, Sense, Stroke};
-use catan::{Player, PlayerColor};
+use catan::{PlayerColor};
 use catan_protocol::PlayerInfo;
 use crate::game_view::GameView;
 use crate::theme::player_color;

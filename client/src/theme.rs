@@ -1,5 +1,5 @@
 use eframe::egui::Color32;
-use catan::{Player, PlayerColor, Resource, Terrain};
+use catan::{PlayerColor, Resource, Terrain};
 use catan_protocol::PlayerInfo;
 
 pub(crate) const OUTLINE: Color32 = Color32::from_rgb(38, 34, 30);

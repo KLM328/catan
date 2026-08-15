@@ -1,6 +1,6 @@
 use eframe::egui;
 use eframe::egui::{Align2, Ui};
-use catan::{Cost, Game, GameStatus};
+use catan::{Cost, GameStatus};
 use crate::{action_button, player_color, theme, BuildMode};
 use crate::game_view::GameView;
 

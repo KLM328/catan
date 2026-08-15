@@ -1,5 +1,5 @@
 use crate::panels::{actions, board, dice, end, hand, infos, next_player, message};
-use catan::{EdgeId, Game, GameError, GameStatus, Player, PlayerColor, PlayerId, ResourceCounts, Roll, Scenario, Steal, TileId, VertexId};
+use catan::{EdgeId, Game, GameError, GameStatus, Player, PlayerColor, PlayerId, ResourceCounts, Roll, Scenario, TileId, VertexId};
 use eframe::egui;
 use catan_protocol::{GameSnapshot, PlayerInfo};
 use crate::{GameView, BuildMode};
@@ -11,7 +11,7 @@ pub enum UiAction {
     BuildRoad(EdgeId),
     UpgradeCity(VertexId),
     MoveRobber(TileId),
-    Steal(Option<Steal>),
+    Steal(Option<PlayerId>),
     Discard(ResourceCounts),
 }
 
@@ -104,9 +104,8 @@ impl eframe::App for CatanApp {
 
         end::show(ui, &self.game);
 
-        let now = ui.input(|i| i.time);
         message::show(ui, &self.message);
-        for action in actions {
+        for _ in actions {
             todo!()
         }
     }
