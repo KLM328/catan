@@ -19,6 +19,10 @@ impl Scenario {
     pub fn terrains(&self) -> &[Terrain] {
         &self.terrain_bag
     }
+    
+    pub fn topology(&self) -> &Topology {
+        &self.topology
+    }
 
     pub fn shuffled_terrains(&self) -> Vec<Terrain> {
         let mut terrains = self.terrain_bag.clone();

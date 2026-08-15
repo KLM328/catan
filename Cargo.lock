@@ -578,8 +578,10 @@ name = "catan-client"
 version = "0.1.0"
 dependencies = [
  "catan",
+ "catan-protocol",
  "eframe",
  "egui",
+ "log",
 ]
 
 [[package]]

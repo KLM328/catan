@@ -1,10 +1,8 @@
 use crate::panels::{actions, board, dice, end, hand, infos, next_player, message};
-use catan::{
-    EdgeId, Game, GameError, Player, PlayerColor, PlayerId, ResourceCounts, Roll, Scenario, Steal,
-    TileId, VertexId,
-};
+use catan::{EdgeId, Game, GameError, GameStatus, Player, PlayerColor, PlayerId, ResourceCounts, Roll, Scenario, Steal, TileId, VertexId};
 use eframe::egui;
-use crate::panels::board::BuildMode;
+use catan_protocol::{GameSnapshot, PlayerInfo};
+use crate::{GameView, BuildMode};
 
 pub enum UiAction {
     Roll,
@@ -14,11 +12,11 @@ pub enum UiAction {
     UpgradeCity(VertexId),
     MoveRobber(TileId),
     Steal(Option<Steal>),
-    Discard(PlayerId, ResourceCounts), //playerId à retiré quand client-serveur
+    Discard(ResourceCounts),
 }
 
 pub(crate) struct CatanApp {
-    game: Game,
+    game: GameView,
     hex_size: f32,
     last_roll: Option<Roll>,
     message: Option<(String, f64)>,
@@ -45,48 +43,27 @@ impl CatanApp {
         game.start(&terrains).expect("mise en place du plateau");
 
         Self {
-            game,
+            game : GameView::from(GameSnapshot {
+                board : game.board().unwrap().clone(),
+                scenario : Scenario::standard(),
+                player_id : PlayerId::new(0),
+                players : game.players().iter().map(|(&id, p)| PlayerInfo::from((p, id))).collect(),
+                game_status : GameStatus::PlayingActions,
+                turn_order : game.turn_order().to_vec(),
+                current_turn : game.current_player_index(),
+                hand : game.get_player(PlayerId::new(0)).unwrap().hand().clone(),
+
+            }),
             hex_size: 80.0,
-            last_roll: None,
+            last_roll: Some(Roll::new(4, 6).unwrap()),
             message: None,
             build_mode: BuildMode::None,
             discard_selection: ResourceCounts::default(),
         }
     }
 
-    fn apply(&mut self, action: UiAction, now : f64) {
-        let player = self.game.current_player();
-        let result = match action {
-            UiAction::Roll => {
-                let roll = Roll::random();
-                self.last_roll = Some(roll);
-                self.game.apply_roll(self.game.current_player(), roll).map(|_| ())
-            }
-            UiAction::NextPlayer => {
-                self.game.next_player(self.game.current_player())
-            }
-            UiAction::BuildSettlement(vertex_id) => {
-                self.game.build_settlement(player, vertex_id)
-            }
-            UiAction::BuildRoad(edge_id) => {
-                self.game.build_road(player, edge_id)
-            }
-            UiAction::UpgradeCity(vertex_id) => {
-                self.game.upgrade_settlement_to_city(player, vertex_id)
-            }
-            UiAction::MoveRobber(tile_id) => self.game.move_robber(player, tile_id),
-            UiAction::Steal(steal_option) => self.game.steal(player, steal_option),
-            UiAction::Discard(player, resources) => {
-                self.discard_selection = ResourceCounts::default();
-                self.game.discard(player, resources)
-            }
-        };
-        if let Err(e) = result {
-            self.message = Some((format!("{e}"), now));
-        } else {
-            self.build_mode = BuildMode::None;
-        }
-    }
+
+
 }
 
 impl eframe::App for CatanApp {
@@ -130,7 +107,7 @@ impl eframe::App for CatanApp {
         let now = ui.input(|i| i.time);
         message::show(ui, &self.message);
         for action in actions {
-            self.apply(action, now);
+            todo!()
         }
     }
 }

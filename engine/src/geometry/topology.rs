@@ -54,7 +54,7 @@ impl Topology {
 
 
 
-    pub(crate) fn from_hexes(hexes : &[Hex]) -> Topology{
+    pub fn from_hexes(hexes : &[Hex]) -> Topology{
         let mut topology = Topology::new();
         topology.hexes = hexes.to_vec();
         let mut vertices: HashMap<[Hex; 3], VertexId> = HashMap::new();

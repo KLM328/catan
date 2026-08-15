@@ -199,11 +199,6 @@ impl Game {
         }
     }
 
-    pub fn get_next_player(&self) -> PlayerId {
-        self.turn_order[(self.current_turn + 1) % self.turn_order.len()]
-    }
-
-
     pub fn set_players_order(&mut self, rolls: &[(PlayerId, Roll)]) -> Result<(), GameError> {
         self.check_status(&[StatusKind::Starting])?;
         if rolls.len() == self.players.len() {

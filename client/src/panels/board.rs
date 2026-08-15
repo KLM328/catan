@@ -1,8 +1,10 @@
 use crate::panels::steal;
 use crate::{UiAction, player_color, terrain_color};
-use catan::{BuildingKind, EdgeId, Game, GameStatus, Layout, TileId, VertexId};
+use catan::{BuildingKind, EdgeId, GameStatus, Layout, TileId, VertexId};
 use eframe::egui;
 use eframe::egui::{Align2, Color32, FontId, Pos2, Sense, Shape, Stroke, Ui};
+use crate::game_view::GameView;
+
 #[derive(PartialEq, Clone, Copy)]
 pub(crate) enum BuildMode {
     None,
@@ -13,7 +15,7 @@ pub(crate) enum BuildMode {
 
 pub(crate) fn show(
     ui: &mut Ui,
-    game: &Game,
+    game: &GameView,
     hex_size: &mut f32,
     build_mode: &BuildMode,
 ) -> Vec<UiAction> {
@@ -40,7 +42,7 @@ pub(crate) fn show(
             *hex_size = (*hex_size * (1.0 + scroll * 0.002)).clamp(20.0, 200.0);
         }
 
-        let board = game.board().expect("plateau initialisé");
+        let board = game.board();
         let topo = board.topology();
 
         for (index, tile) in board.tiles().iter().enumerate() {

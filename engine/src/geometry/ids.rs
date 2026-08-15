@@ -8,7 +8,7 @@ impl TileId {
     pub fn new(index: usize) -> TileId {
         TileId(index)
     }
-    pub(crate) fn value(&self) -> usize {
+    pub fn value(&self) -> usize {
         self.0
     }
 }
@@ -20,7 +20,7 @@ impl VertexId {
         VertexId(index)
     }
 
-    pub(crate) fn value(&self) -> usize {
+    pub fn value(&self) -> usize {
         self.0
     }
 }

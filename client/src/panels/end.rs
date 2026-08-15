@@ -3,7 +3,11 @@ use catan::{BuildingKind, Game, GameStatus, Player, PlayerColor, PlayerId};
 use eframe::egui;
 use eframe::egui::{Color32, Sense, Ui};
 use std::cmp::Reverse;
-pub(crate) fn show(ui: &mut Ui, game: &Game) {
+use catan_protocol::PlayerInfo;
+use log::warn;
+use crate::game_view::GameView;
+
+pub(crate) fn show(ui: &mut Ui, game: &GameView) {
     const WIDTH: f32 = 700.0;
     const COL: usize = 6;
     const SPACE: f32 = 10.0;
@@ -23,7 +27,7 @@ pub(crate) fn show(ui: &mut Ui, game: &Game) {
             ui.set_width(WIDTH);
             ui.add_space(10.0);
 
-            let champion = game.get_player(winner).unwrap();
+            let champion = game.get_player(*winner).unwrap();
             let c = player_color(champion);
 
             ui.vertical_centered(|ui| {
@@ -61,16 +65,17 @@ pub(crate) fn show(ui: &mut Ui, game: &Game) {
                         );
                     }
                     ui.end_row();
-                    let mut players: Vec<(PlayerId, &Player)> = game
+                    let mut players: Vec<(PlayerId, &PlayerInfo)> = game
                         .turn_order()
                         .iter()
                         .map(|&p| (p, game.get_player(p).unwrap()))
                         .collect();
-                    players.sort_by_key(|(_, player)| Reverse(player.score()));
+                    players.sort_by_key(|&(_ , player)| Reverse(game.score(player))); //les scores sont faux, il faudra envoyer les infos correcte via un message server
+
 
                     for (id, player) in players {
                         let color = player_color(player);
-                        let board = game.board().unwrap();
+                        let board = game.board();
 
                         let settlements = board
                             .buildings()
@@ -107,8 +112,9 @@ pub(crate) fn show(ui: &mut Ui, game: &Game) {
                         cell(ui, egui::RichText::new(0.to_string()).size(17.0));
                         cell(
                             ui,
-                            egui::RichText::new(player.score().to_string()).size(20.0),
+                            egui::RichText::new(game.score(player).to_string()).size(20.0), //les scores sont faux, il faudra envoyer les infos correcte via un message server
                         );
+                        todo!("récuparation des scores finaux depuis le serveur");
                         ui.end_row();
                     }
                 });

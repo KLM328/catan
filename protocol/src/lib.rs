@@ -1,4 +1,4 @@
-use catan::{Building, EdgeId, Game, GameStatus, Hand, Player, PlayerColor, PlayerId, ResourceCounts, Roll, RollOutcome, Scenario, Tile, TileId, VertexId};
+use catan::{Board, Building, EdgeId, Game, GameStatus, Hand, Player, PlayerColor, PlayerId, ResourceCounts, Roll, RollOutcome, Scenario, Tile, TileId, VertexId};
 use serde::{Deserialize, Serialize};
 
 mod server_error;
@@ -27,15 +27,64 @@ pub struct PlayerInfo {
     pub color: PlayerColor,
     pub hand_count: u8,
 }
- impl From<(&Player, PlayerId)> for PlayerInfo {
-     fn from((player, id): (&Player, PlayerId)) -> Self {
-         Self {
-             color : player.color(),
-             hand_count : player.hand().count(),
-             id
-         }
-     }
- }
+impl From<(&Player, PlayerId)> for PlayerInfo {
+    fn from((player, id): (&Player, PlayerId)) -> Self {
+        Self {
+            color : player.color(),
+            hand_count : player.hand().count(),
+            id
+        }
+    }
+}
+
+impl PlayerInfo {
+    pub fn color(&self) -> PlayerColor {
+        self.color
+    }
+    
+    pub fn id(&self) -> PlayerId {
+        self.id
+    }
+    
+    pub fn hand_count(&self) -> u8 {
+        self.hand_count
+    }
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+pub struct GameSnapshot {
+    pub scenario: Scenario,
+    pub board : Board,
+    pub player_id: PlayerId,
+    pub players: Vec<PlayerInfo>,
+    pub game_status: GameStatus,
+    pub turn_order: Vec<PlayerId>,
+    pub current_turn: usize,
+    pub hand: Hand,
+}
+
+impl GameSnapshot {
+    fn new(game: &Game, player_id: PlayerId) -> Self {
+        Self {
+            scenario: game.scenario().clone(),
+            board : game.board().unwrap().clone(),
+            players: game
+                .players()
+                .iter()
+                .map(|(id, p)| PlayerInfo {
+                    color: p.color(),
+                    id: id.clone(),
+                    hand_count: p.hand().count(),
+                })
+                .collect(),
+            game_status: game.status(),
+            turn_order: game.turn_order().to_vec(),
+            current_turn: game.current_player_index(),
+            hand: game.get_player(player_id).unwrap().hand().clone(),
+            player_id,
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum ServerMessage {
@@ -60,18 +109,7 @@ pub enum ServerMessage {
     },
     PlayerJoined(PlayerInfo),
     Leave(PlayerId),
-    GameView {
-        scenario: Scenario,
-        tiles: Vec<Tile>,
-        buildings: Vec<Option<Building>>,
-        roads: Vec<Option<PlayerId>>,
-        player_id: PlayerId,
-        players: Vec<PlayerInfo>,
-        game_status: GameStatus,
-        turn_order: Vec<PlayerId>,
-        current_turn: usize,
-        hand: Hand,
-    },
+    Sync(GameSnapshot),
     LobbyView {
         player_id: PlayerId,
         players: Vec<PlayerInfo>,
@@ -101,27 +139,7 @@ impl From<(&Game, PlayerId)> for ServerMessage {
                 player_id: viewer,
             },
             _ => {
-                let board = game.board().unwrap();
-                ServerMessage::GameView {
-                    scenario: game.scenario().clone(),
-                    tiles: board.tiles().to_vec(),
-                    buildings: board.buildings().to_vec(),
-                    roads: board.roads().to_vec(),
-                    players: game
-                        .players()
-                        .iter()
-                        .map(|(id, p)| PlayerInfo {
-                            color: p.color(),
-                            id : id.clone(),
-                            hand_count: p.hand().count(),
-                        })
-                        .collect(),
-                    game_status: game.status(),
-                    turn_order: game.turn_order().to_vec(),
-                    current_turn: game.current_player_index(),
-                    hand: game.get_player(viewer).unwrap().hand().clone(),
-                    player_id: viewer,
-                }
+                ServerMessage::Sync(GameSnapshot::new(game, viewer))
             }
         }
     }
@@ -136,7 +154,7 @@ impl From<ServerError> for ServerMessage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use catan::{BuildingKind, GameError, Production};
+    use catan::{BuildingKind, GameError, Production, Terrain};
 
     fn assert_serde_roundtrip<T>(message: T)
     where
@@ -227,22 +245,29 @@ mod tests {
 
     #[test]
     fn test_server_message_game_view_roundtrip() {
-        // Test dédié à GameView car sa structure est plus complexe
-        let game_view = ServerMessage::GameView {
-            scenario: Scenario::standard(),
-            tiles: vec![],
-            buildings: vec![
-                None,
-                Some(Building::new(BuildingKind::Settlement, PlayerId::new(0))),
-            ],
-            roads: vec![None, Some(PlayerId::new(0))],
-            players: vec![dummy_player_info(0)],
-            game_status: GameStatus::Starting, // Adaptez selon les variantes de GameStatus
-            turn_order: vec![PlayerId::new(0)],
-            current_turn: 0,
-            hand: Hand::default(),
-            player_id: PlayerId::new(0),
-        };
+        let mut game = Game::new(Scenario::standard());
+        game.add_player(Player::new(PlayerColor::Red));
+        game.add_player(Player::new(PlayerColor::White));
+
+        let terrains : Vec<Terrain> = game.scenario().terrains().iter().copied().collect();
+
+        game.start(&terrains).unwrap();
+        
+        
+        let game_view = ServerMessage::Sync(
+        
+            
+            GameSnapshot{
+                scenario: Scenario::standard(),
+                board : game.board().unwrap().clone(),
+                players: vec![dummy_player_info(0)],
+                game_status: GameStatus::Starting,
+                turn_order: vec![PlayerId::new(0)],
+                current_turn: 0,
+                hand: Hand::default(),
+                player_id: PlayerId::new(0),
+            }
+        );
 
         assert_serde_roundtrip(game_view);
     }

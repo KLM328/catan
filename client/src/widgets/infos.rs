@@ -1,12 +1,14 @@
 use eframe::egui;
 use eframe::egui::{Align2, Color32, FontId, Sense, Stroke};
 use catan::{Player, PlayerColor};
+use catan_protocol::PlayerInfo;
+use crate::game_view::GameView;
 use crate::theme::player_color;
 use crate::widgets::shapes::card;
 use crate::widgets::player_disc;
 
 
-pub(crate) fn player_row(ui: &mut egui::Ui, player: &Player, is_current: bool) {
+pub(crate) fn player_row(ui: &mut egui::Ui, game : &GameView, player: &PlayerInfo, is_current: bool) {
     let (rect, _) = ui.allocate_exact_size(
         egui::vec2(ui.available_width(), 90.0),
         Sense::hover(),
@@ -45,7 +47,7 @@ pub(crate) fn player_row(ui: &mut egui::Ui, player: &Player, is_current: bool) {
     painter.text(
         egui::pos2(resource_card.right() + 10.0, line2),
         Align2::LEFT_CENTER,
-        player.hand().count().to_string(),
+        player.hand_count().to_string(),
         FontId::proportional(16.0),
         Color32::from_gray(200),
     );
@@ -69,7 +71,7 @@ pub(crate) fn player_row(ui: &mut egui::Ui, player: &Player, is_current: bool) {
     painter.text(
         egui::pos2(rect.right() - 20.0, line2),
         Align2::RIGHT_CENTER,
-        player.score().to_string(),
+        game.score(player).to_string(),
         FontId::proportional(26.0),
         Color32::from_gray(245),
     );

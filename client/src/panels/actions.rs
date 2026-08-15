@@ -2,8 +2,9 @@ use eframe::egui;
 use eframe::egui::{Align2, Ui};
 use catan::{Cost, Game, GameStatus};
 use crate::{action_button, player_color, theme, BuildMode};
+use crate::game_view::GameView;
 
-pub(crate) fn show(ui : &mut Ui, game : &Game, build_mode: &mut BuildMode) {
+pub(crate) fn show(ui : &mut Ui, game : &GameView, build_mode: &mut BuildMode) {
 
     egui::Area::new(egui::Id::new("actions"))
         .anchor(Align2::RIGHT_BOTTOM, egui::vec2(-theme::SIDE_PANEL_W - theme::BUTTON_W_H * 2.0 - 42.0, -24.0))
@@ -18,7 +19,7 @@ pub(crate) fn show(ui : &mut Ui, game : &Game, build_mode: &mut BuildMode) {
                         (BuildMode::Settlement, &Cost::SETTLEMENT),
                         (BuildMode::City, &Cost::CITY),
                     ] {
-                        let ok = player.can_pay(cost).is_ok();
+                        let ok = game.can_pay(cost).is_ok();
                         if action_button(ui, mode, *build_mode, cost, ok, color).clicked()
                             && ok
                         {

@@ -125,7 +125,7 @@ impl fmt::Display for InvalidAction {
 }
 impl std::error::Error for InvalidAction {}
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Board {
     topology: Topology,
     tiles: Vec<Tile>,
@@ -134,6 +134,7 @@ pub struct Board {
     robber: TileId,
 }
 impl Board {
+
     pub(crate) fn new(
         topology: Topology,
         tiles: Vec<Tile>,

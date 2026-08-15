@@ -3,6 +3,7 @@ use eframe::egui::Ui;
 use catan::{Game, GameStatus, PlayerColor, PlayerId, Steal};
 use crate::UiAction;
 use crate::{player_color, disc_button};
+use crate::game_view::GameView;
 
 #[derive(PartialEq, Clone, Copy)]
 pub(crate) enum StealChoice {
@@ -11,7 +12,7 @@ pub(crate) enum StealChoice {
     Victim(PlayerId),
 }
 
-pub(crate) fn show(ui : &mut Ui, game : &Game) -> Vec<UiAction>{
+pub(crate) fn show(ui : &mut Ui, game : &GameView) -> Vec<UiAction>{
     let mut actions = Vec::new();
     if matches!(game.status(), GameStatus::AwaitingSteal) {
         // 1. On extrait les données AVANT le closure
@@ -40,7 +41,7 @@ pub(crate) fn show(ui : &mut Ui, game : &Game) -> Vec<UiAction>{
                             ui.add_space(((ui.available_width() - total) * 0.5).max(0.0));
                             for &v in &victims {
                                 let p = &game.get_player(v).unwrap();
-                                let cards = p.hand().count();
+                                let cards = p.hand_count();
                                 let sub = if cards > 1 {
                                     format!("{cards} cartes")
                                 } else {
@@ -65,10 +66,7 @@ pub(crate) fn show(ui : &mut Ui, game : &Game) -> Vec<UiAction>{
 
         let steal = match chosen {
             StealChoice::Nobody => None,
-            StealChoice::Victim(victim) => Some(Steal::new(
-                victim,
-                game.get_player(victim).unwrap().hand().random_pick(),
-            )),
+            StealChoice::Victim(victim) => todo!(),
             StealChoice::Pending => return Vec::new(),
         };
         actions.push(UiAction::Steal(steal));

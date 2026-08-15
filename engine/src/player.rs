@@ -1,6 +1,6 @@
 use std::fmt::Display;
 use serde::{Deserialize, Serialize};
-use crate::{Hand, ResourceError, ResourceCounts};
+use crate::{Hand, ResourceError, ResourceCounts, Cost};
 
 #[derive(Debug, PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub enum PlayerColor {
@@ -74,11 +74,11 @@ impl Player {
         self.hand.add(resources);
     }
 
-    pub(crate) fn pay(&mut self, cost : &crate::Cost) -> Result<(), ResourceError> {
+    pub(crate) fn pay(&mut self, cost : &Cost) -> Result<(), ResourceError> {
         self.hand.pay(cost)
     }
 
-    pub fn can_pay(&self, cost : &crate::Cost) -> Result<(), ResourceError> {
+    pub fn can_pay(&self, cost : &Cost) -> Result<(), ResourceError> {
         self.hand.can_pay(cost)
     }
 

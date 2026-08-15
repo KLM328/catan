@@ -1,9 +1,9 @@
-use catan::Game;
 use eframe::egui;
 use eframe::egui::Ui;
 use crate::{theme, player_row};
+use crate::game_view::GameView;
 
-pub(crate) fn show(ui: &mut Ui, game: &Game) {
+pub(crate) fn show(ui: &mut Ui, game: &GameView) {
     egui::Panel::right("info").exact_size(theme::SIDE_PANEL_W).show(ui, |ui| {
         ui.add_space(12.0);
 
@@ -15,7 +15,7 @@ pub(crate) fn show(ui: &mut Ui, game: &Game) {
             .iter()
             .map(|&id| (id, game.get_player(id).unwrap()))
             .for_each(|(id, player)| {
-                player_row(ui, player, id == current);
+                player_row(ui, game, player, id == current);
                 ui.add_space(6.0);
             });
     });

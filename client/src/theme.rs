@@ -1,6 +1,6 @@
 use eframe::egui::Color32;
 use catan::{Player, PlayerColor, Resource, Terrain};
-
+use catan_protocol::PlayerInfo;
 
 pub(crate) const OUTLINE: Color32 = Color32::from_rgb(38, 34, 30);
 pub(crate) const CARD_W: f32 = 100.0;
@@ -20,7 +20,7 @@ pub(crate) fn resource_color(r: Resource) -> Color32 {
     }
 }
 
-pub(crate) fn player_color(player: &Player) -> Color32 {
+pub(crate) fn player_color(player: &PlayerInfo) -> Color32 {
     match player.color() {
         PlayerColor::Blue => Color32::from_rgb(0, 0, 250),
         PlayerColor::Red => Color32::from_rgb(185, 5, 20),

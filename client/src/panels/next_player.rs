@@ -2,8 +2,9 @@ use crate::{theme, UiAction, hand_over_button, player_color};
 use catan::{Game, GameStatus};
 use eframe::egui;
 use eframe::egui::{Align2, Ui};
+use crate::game_view::GameView;
 
-pub(crate) fn show(ui: &mut Ui, game: &Game) -> Vec<UiAction> {
+pub(crate) fn show(ui: &mut Ui, game: &GameView) -> Vec<UiAction> {
     let mut actions = Vec::new();
 
     egui::Area::new(egui::Id::new("next_player"))
