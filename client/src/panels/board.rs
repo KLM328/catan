@@ -1,8 +1,10 @@
 use crate::panels::steal;
-use crate::{UiAction, player_color, terrain_color};
+use crate::{player_color, terrain_color};
 use catan::{BuildingKind, EdgeId, GameStatus, Layout, TileId, VertexId};
 use eframe::egui;
 use eframe::egui::{Align2, Color32, FontId, Pos2, Sense, Shape, Stroke, Ui};
+use catan_protocol::ClientMessage;
+use crate::app::UiState;
 use crate::game_view::GameView;
 
 #[derive(PartialEq, Clone, Copy)]
@@ -16,9 +18,8 @@ pub(crate) enum BuildMode {
 pub(crate) fn show(
     ui: &mut Ui,
     game: &GameView,
-    hex_size: &mut f32,
-    build_mode: &BuildMode,
-) -> Vec<UiAction> {
+    ui_state: &mut UiState,
+) -> Vec<ClientMessage> {
     let mut actions = Vec::new();
     egui::CentralPanel::default().show(ui, |ui| {
         actions.extend(steal::show(ui, game));
@@ -33,13 +34,13 @@ pub(crate) fn show(
         // il suffit de placer l'origine au centre de la zone de dessin.
         let center = response.rect.center();
         let layout = Layout {
-            hex_size: *hex_size,
+            hex_size: ui_state.hex_size(),
             origin: (center.x, center.y),
         };
 
         let scroll = ui.input(|i| i.smooth_scroll_delta.y);
         if scroll != 0.0 {
-            *hex_size = (*hex_size * (1.0 + scroll * 0.002)).clamp(20.0, 200.0);
+            ui_state.adjust_hex_size_with_scroll(scroll);
         }
 
         let board = game.board();
@@ -68,7 +69,7 @@ pub(crate) fn show(
             if let Some(token) = tile.number() {
                 let (cx, cy) = layout.tile_position(topo, tile_id);
                 let pos = Pos2::new(cx, cy);
-                painter.circle_filled(pos, *hex_size * 0.35, Color32::from_rgb(240, 235, 220));
+                painter.circle_filled(pos, ui_state.hex_size() * 0.35, Color32::from_rgb(240, 235, 220));
 
                 // 6 et 8 sont les numéros "rouges" : les plus probables.
                 let color = match token.value() {
@@ -88,7 +89,7 @@ pub(crate) fn show(
                     pos,
                     Align2::CENTER_CENTER,
                     token.value().to_string(),
-                    FontId::proportional(*hex_size * size),
+                    FontId::proportional(ui_state.hex_size() * size),
                     color,
                 );
             }
@@ -97,8 +98,8 @@ pub(crate) fn show(
             if board.robber() == tile_id {
                 let (cx, cy) = layout.tile_position(topo, tile_id);
                 painter.circle_filled(
-                    Pos2::new(cx, cy - *hex_size * 0.50),
-                    *hex_size * 0.30,
+                    Pos2::new(cx, cy - ui_state.hex_size() * 0.50),
+                    ui_state.hex_size() * 0.30,
                     Color32::from_rgb(20, 20, 20),
                 );
             }
@@ -111,7 +112,7 @@ pub(crate) fn show(
                 painter.line_segment(
                     [Pos2::new(ax, ay), Pos2::new(bx, by)],
                     Stroke::new(
-                        *hex_size * 0.15,
+                        ui_state.hex_size() * 0.15,
                         player_color(game.get_player(*player).unwrap()),
                     ),
                 );
@@ -125,11 +126,11 @@ pub(crate) fn show(
                 let pos = Pos2::new(x, y);
                 let color = player_color(game.get_player(b.owner()).unwrap());
                 match b.kind() {
-                    BuildingKind::Settlement => painter.circle_filled(pos, *hex_size * 0.3, color),
+                    BuildingKind::Settlement => painter.circle_filled(pos, ui_state.hex_size() * 0.3, color),
                     BuildingKind::City => painter.rect_filled(
                         egui::Rect::from_center_size(
                             pos,
-                            egui::vec2(*hex_size * 0.6, *hex_size * 0.6),
+                            egui::vec2(ui_state.hex_size() * 0.6, ui_state.hex_size() * 0.6),
                         ),
                         2.0,
                         color,
@@ -141,18 +142,18 @@ pub(crate) fn show(
         if response.clicked()
             && let Some(pos) = response.interact_pointer_pos()
         {
-            let radius = *hex_size * 0.30;
+            let radius = ui_state.hex_size() * 0.30;
             match game.status() {
                 GameStatus::Starting => {}
                 GameStatus::FirstPlacementSettlement | GameStatus::SecondPlacementSettlement => {
                     if let Some(vertex_location) = layout.pick_vertex(topo, (pos.x, pos.y), radius)
                     {
-                        actions.push(UiAction::BuildSettlement(vertex_location));
+                        actions.push(ClientMessage::BuildSettlement(vertex_location));
                     }
                 }
                 GameStatus::FirstPlacementRoad | GameStatus::SecondPlacementRoad => {
                     if let Some(edge_location) = layout.pick_edge(topo, (pos.x, pos.y), radius) {
-                        actions.push(UiAction::BuildRoad(edge_location));
+                        actions.push(ClientMessage::BuildRoad(edge_location));
                     }
                 }
                 GameStatus::AwaitingRoll => {}
@@ -160,29 +161,29 @@ pub(crate) fn show(
                 GameStatus::AwaitingSteal => {}
                 GameStatus::AwaitingNewRobberLocation => {
                     if let Some(tile_location) = layout.pick_tile(topo, (pos.x, pos.y)) {
-                        actions.push(UiAction::MoveRobber(tile_location));
+                        actions.push(ClientMessage::RobberLocation(tile_location));
                     }
                 }
-                GameStatus::PlayingActions => match build_mode {
+                GameStatus::PlayingActions => match ui_state.build_mode() {
                     BuildMode::None => {}
                     BuildMode::Road => {
                         if let Some(edge_location) = layout.pick_edge(topo, (pos.x, pos.y), radius)
                         {
-                            actions.push(UiAction::BuildRoad(edge_location));
+                            actions.push(ClientMessage::BuildRoad(edge_location));
                         }
                     }
                     BuildMode::Settlement => {
                         if let Some(vertex_location) =
                             layout.pick_vertex(topo, (pos.x, pos.y), radius)
                         {
-                            actions.push(UiAction::BuildSettlement(vertex_location));
+                            actions.push(ClientMessage::BuildSettlement(vertex_location));
                         }
                     }
                     BuildMode::City => {
                         if let Some(vertex_location) =
                             layout.pick_vertex(topo, (pos.x, pos.y), radius)
                         {
-                            actions.push(UiAction::UpgradeCity(vertex_location))
+                            actions.push(ClientMessage::UpgradeCity(vertex_location))
                         }
                     }
                 },

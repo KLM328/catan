@@ -103,7 +103,10 @@ fn build_messages(
             }
         }
 
-        ClientMessage::Join {..}  => return Err(ServerError::InvalidMessageType)
+        ClientMessage::Join {..}  => return Err(ServerError::InvalidMessageType),
+        ClientMessage::Sync => {
+            messages.push((game_state.sender(player_id).unwrap(), ServerMessage::from((game_state.game(), player_id))));
+        }
     };
     Ok(messages)
 }

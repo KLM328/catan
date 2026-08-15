@@ -13,3 +13,4 @@ catan = { path = "engine" }
 catan-protocol = {path = "protocol"}
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
+tokio = { version = "1", features = ["full"] }

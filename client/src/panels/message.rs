@@ -1,12 +1,13 @@
 use crate::theme;
 use eframe::egui::{self, Align2, Color32, FontId, Ui};
 use std::time::Duration;
+use crate::app::UiState;
 
 const HOLD: f64 = 3.0;   // secondes d'affichage plein
 const FADE: f32 = 0.5;   // secondes de fondu
 
-pub(crate) fn show(ui: &mut Ui, message: &Option<(String, f64)>) {
-    let Some((text, shown_at)) = message else { return };
+pub(crate) fn show(ui: &mut Ui, ui_state: &UiState) {
+    let Some((text, shown_at)) = ui_state.message() else { return };
 
     let now = ui.input(|i| i.time);
     let age = now - shown_at;

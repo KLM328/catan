@@ -1,10 +1,12 @@
-use crate::{draw_die, theme, UiAction};
+use crate::{draw_die, theme};
 use catan::{GameStatus, Roll};
 use eframe::egui;
 use eframe::egui::{Align2, Color32, Sense, Ui};
+use catan_protocol::ClientMessage;
+use crate::app::UiState;
 use crate::game_view::GameView;
 
-pub(crate) fn show(ui: &mut Ui, game: &GameView, last_roll: &mut Option<Roll>) -> Vec<UiAction> {
+pub(crate) fn show(ui: &mut Ui, game: &GameView, ui_state: &mut UiState) -> Vec<ClientMessage> {
     let mut actions = Vec::new();
 
     egui::Area::new(egui::Id::new("dices"))
@@ -39,7 +41,7 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView, last_roll: &mut Option<Roll>) -
                 Color32::from_rgb(230, 228, 222)
             };
 
-            let (a, b) = last_roll.map(|r| (r.dice1(), r.dice2())).unwrap_or((1, 1));
+            let (a, b) = ui_state.last_roll().map(|r| (r.dice1(), r.dice2())).unwrap_or((1, 1));
 
             let c = response.rect.center();
             draw_die(
@@ -59,7 +61,7 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView, last_roll: &mut Option<Roll>) -
 
 
             if matches!(game.status(),  GameStatus::AwaitingRoll) && response.on_hover_text("Lancer les dés").clicked() {
-                    actions.push(UiAction::Roll);
+                    actions.push(ClientMessage::Roll);
             }
 
 

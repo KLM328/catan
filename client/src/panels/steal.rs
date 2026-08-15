@@ -1,7 +1,7 @@
 use eframe::egui;
 use eframe::egui::Ui;
 use catan::{GameStatus, PlayerColor, PlayerId};
-use crate::UiAction;
+use catan_protocol::ClientMessage;
 use crate::{player_color, disc_button};
 use crate::game_view::GameView;
 
@@ -12,7 +12,7 @@ pub(crate) enum StealChoice {
     Victim(PlayerId),
 }
 
-pub(crate) fn show(ui : &mut Ui, game : &GameView) -> Vec<UiAction>{
+pub(crate) fn show(ui : &mut Ui, game : &GameView) -> Vec<ClientMessage>{
     let mut actions = Vec::new();
     if matches!(game.status(), GameStatus::AwaitingSteal) {
         // 1. On extrait les données AVANT le closure
@@ -68,7 +68,7 @@ pub(crate) fn show(ui : &mut Ui, game : &GameView) -> Vec<UiAction>{
             StealChoice::Victim(victim) => Some(victim),
             StealChoice::Pending => return Vec::new(),
         };
-        actions.push(UiAction::Steal(steal));
+        actions.push(ClientMessage::Steal(steal));
     }
     actions
 }

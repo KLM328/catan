@@ -9,7 +9,8 @@ pub enum ServerError {
     Rules(GameError),
     GamePaused,
     InvalidToken,
-    PlayerIsAlreadyConnected
+    PlayerIsAlreadyConnected,
+    ServerOffline
 }
 
 impl From<GameError> for ServerError {

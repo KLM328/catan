@@ -1,22 +1,28 @@
-use crate::panels::{actions, board, dice, end, hand, infos, next_player, message};
-use catan::{EdgeId, Game, GameError, GameStatus, Player, PlayerColor, PlayerId, ResourceCounts, Roll, Scenario, TileId, VertexId};
+use crate::panels::{actions, board, dice, end, hand, infos, message, next_player};
+use crate::scenes::playing;
+use crate::{BuildMode, GameView, dispatch};
+use catan::{
+    EdgeId, Game, GameError, GameStatus, Player, PlayerColor, PlayerId, ResourceCounts, Roll,
+    Scenario, TileId, VertexId,
+};
+use catan_protocol::{ClientMessage, GameSnapshot, PlayerInfo, ServerMessage};
 use eframe::egui;
-use catan_protocol::{GameSnapshot, PlayerInfo};
-use crate::{GameView, BuildMode};
+use tokio::sync::mpsc::error::TrySendError;
+use tokio::sync::mpsc::{Receiver, Sender};
 
-pub enum UiAction {
-    Roll,
-    NextPlayer,
-    BuildSettlement(VertexId),
-    BuildRoad(EdgeId),
-    UpgradeCity(VertexId),
-    MoveRobber(TileId),
-    Steal(Option<PlayerId>),
-    Discard(ResourceCounts),
+pub(crate) enum AppState {
+    Connecting,
+    Lobby { players: Vec<PlayerInfo> },
+    Playing(GameView),
 }
 
-pub(crate) struct CatanApp {
-    game: GameView,
+#[derive(Debug)]
+enum AppError {
+    InvalidState,
+    SenderIsFull,
+}
+
+pub(crate) struct UiState {
     hex_size: f32,
     last_roll: Option<Roll>,
     message: Option<(String, f64)>,
@@ -24,51 +30,107 @@ pub(crate) struct CatanApp {
     discard_selection: ResourceCounts,
 }
 
-impl CatanApp {
-    pub(crate) fn new() -> Self {
-        let scenario = Scenario::standard();
-        let terrains = scenario.terrains().to_vec();
+impl UiState {
+    pub(crate) fn adjust_hex_size_with_scroll(&mut self, scroll: f32) {
+        self.hex_size = (self.hex_size * (1.0 + scroll * 0.002)).clamp(20.0, 200.0);
+    }
 
-        let mut game = Game::new(scenario);
+    pub(crate) fn hex_size(&self) -> f32 {
+        self.hex_size
+    }
 
-        game.add_player(Player::new(PlayerColor::Red)).unwrap();
-        game.add_player(Player::new(PlayerColor::White)).unwrap();
-        game.add_player(Player::new(PlayerColor::Brown)).unwrap();
+    pub(crate) fn build_mode(&self) -> BuildMode {
+        self.build_mode
+    }
 
+    pub(crate) fn last_roll(&self) -> Option<Roll> {
+        self.last_roll
+    }
 
-        while let Err(GameError::TiedRolls) =
-            game.set_players_order(&game.sorted_player().iter().map(|&(id, _)| (id, Roll::random())).collect::<Vec<(PlayerId, Roll)>>())
-        {}
+    pub(crate) fn discard_selection(&self) -> &ResourceCounts {
+        &self.discard_selection
+    }
 
-        game.start(&terrains).expect("mise en place du plateau");
+    pub(crate) fn add_discard_selection(&mut self, resource: ResourceCounts) {
+        self.discard_selection.add(&resource);
+    }
 
+    pub(crate) fn remove_discard_selection(&mut self, resource: ResourceCounts) {
+        self.discard_selection.remove(&resource);
+    }
+
+    pub(crate) fn switch_buimd_mode(&mut self, mode: BuildMode) {
+        self.build_mode = if self.build_mode == mode {
+            BuildMode::None
+        } else {
+            mode
+        };
+    }
+
+    pub(crate) fn message(&self) -> Option<(String, f64)> {
+        self.message.clone()
+    }
+}
+
+impl Default for UiState {
+    fn default() -> Self {
         Self {
-            game : GameView::from(GameSnapshot {
-                board : game.board().unwrap().clone(),
-                scenario : Scenario::standard(),
-                player_id : PlayerId::new(0),
-                players : game.players().iter().map(|(&id, p)| PlayerInfo::from((p, id))).collect(),
-                game_status : GameStatus::PlayingActions,
-                turn_order : game.turn_order().to_vec(),
-                current_turn : game.current_player_index(),
-                hand : game.get_player(PlayerId::new(0)).unwrap().hand().clone(),
-
-            }),
             hex_size: 80.0,
-            last_roll: Some(Roll::new(4, 6).unwrap()),
+            last_roll: None,
             message: None,
             build_mode: BuildMode::None,
-            discard_selection: ResourceCounts::default(),
+            discard_selection: Default::default(),
+        }
+    }
+}
+
+pub(crate) struct CatanApp {
+    state: AppState,
+    ui: UiState,
+    tx: Sender<ClientMessage>,
+    rx: Receiver<ServerMessage>,
+}
+
+impl CatanApp {
+    pub(crate) fn new(tx: Sender<ClientMessage>, rx: Receiver<ServerMessage>) -> Self {
+        Self {
+            state: AppState::Connecting,
+            ui: UiState::default(),
+            tx,
+            rx,
         }
     }
 
+    fn game(&self) -> Result<&GameView, AppError> {
+        if let AppState::Playing(game) = &self.state {
+            Ok(game)
+        } else {
+            Err(AppError::InvalidState)
+        }
+    }
 
+    fn ask_sync(&self) -> Result<(), AppError> {
+        self.send(ClientMessage::Sync)?;
+        Ok(())
+    }
 
+    fn send(&self, message: ClientMessage) -> Result<(), AppError> {
+        match self.tx.try_send(message) {
+            Ok(_) => Ok(()),
+            Err(TrySendError::Closed(_)) => {
+                panic!("Impossible d'envoyer les messages vers le tunel")
+            }
+            Err(TrySendError::Full(_)) => Err(AppError::SenderIsFull),
+        }
+    }
 }
 
 impl eframe::App for CatanApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        let mut actions = Vec::new();
+        while let Ok(server_message) = self.rx.try_recv() {
+            dispatch::apply(&mut self.state, &mut self.ui, server_message);
+        }
+        let mut messages = Vec::new();
         let ctx = ui.ctx().clone();
 
         // Taille physique de la fenêtre, indépendante du zoom courant :
@@ -87,26 +149,26 @@ impl eframe::App for CatanApp {
                 .send_viewport_cmd(egui::ViewportCommand::Fullscreen(!full));
         }
 
-        infos::show(ui, &self.game);
+        match &self.state {
+            AppState::Connecting => todo!(),
+            AppState::Lobby { .. } => todo!(),
+            AppState::Playing(view) => playing::show(ui, view, &mut self.ui, &mut messages),
+        }
 
-        actions.extend(board::show(
-            ui,
-            &self.game,
-            &mut self.hex_size,
-            &self.build_mode,
-        ));
+        message::show(ui, &self.ui);
 
-        actions.extend(dice::show(ui, &self.game, &mut self.last_roll));
-        actions.extend(next_player::show(ui, &self.game));
-        actions.extend(hand::show(ui, &self.game, &mut self.discard_selection));
-
-        actions::show(ui, &self.game, &mut self.build_mode);
-
-        end::show(ui, &self.game);
-
-        message::show(ui, &self.message);
-        for _ in actions {
-            todo!()
+        while let Some(message) = messages.get(0).cloned() {
+            match self.send(message) {
+                Ok(_) => {
+                    messages.remove(0);
+                }
+                Err(AppError::SenderIsFull) => {
+                    break;
+                }
+                Err(e) => {
+                    panic!("{:?}", e)
+                }
+            }
         }
     }
 }

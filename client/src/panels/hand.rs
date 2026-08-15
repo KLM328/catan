@@ -1,12 +1,14 @@
-use crate::{theme, UiAction};
+use crate::{theme};
 use catan::{GameStatus, Resource, ResourceCounts};
 use eframe::egui::Ui;
 use egui::{Align2, Color32, Sense, Stroke};
+use catan_protocol::ClientMessage;
+use crate::app::UiState;
 use crate::game_view::GameView;
-use crate::theme::{player_color, resource_color};
+use crate::theme::{player_color, resource_color};   
 use crate::widgets::{badge, card};
 
-pub(crate) fn show(ui: &mut Ui, game: &GameView, selection: &mut ResourceCounts) -> Vec<UiAction>{
+pub(crate) fn show(ui: &mut Ui, game: &GameView, ui_state: &mut UiState) -> Vec<ClientMessage>{
 
     let mut actions = Vec::new();
 
@@ -28,13 +30,13 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView, selection: &mut ResourceCounts)
 
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
-                    if let Some(required) = required && selection.count() == required && ui.button("Défausser").clicked() {
-                            actions.push(UiAction::Discard(*selection));
+                    if let Some(required) = required && ui_state.discard_selection().count() == required && ui.button("Défausser").clicked() {
+                            actions.push(ClientMessage::Discard(ui_state.discard_selection().clone()));
                     }
                     let c = player_color(player);
                     let label = match required {
                         Some(n) => format!("Vous devez défausser {} / {n}",
-                                           selection.count()),
+                                           ui_state.discard_selection().count()),
                         None => String::new(),
                     };
                     ui.label(egui::RichText::new(label).size(20.0).color(c));
@@ -70,7 +72,7 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView, selection: &mut ResourceCounts)
                             badge(&painter, badge_pos, 16.0, &count.to_string(), theme::OUTLINE, Color32::from_gray(240));
 
                             let selected =
-                                required.map_or(0, |_| selection.amount(resource));
+                                required.map_or(0, |_| ui_state.discard_selection().amount(resource));
                             if selected > 0 {
                                 // La part défaussée s'efface : on voit ce qu'on va perdre.
                                 let lost = card_rect.height() * selected as f32 / count.max(1) as f32;
@@ -85,12 +87,12 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView, selection: &mut ResourceCounts)
                         }
 
                         if let Some(required) = required {
-                            let selected = selection.amount(resource);
-                            if response.clicked() && selected < count && selection.count() < required {
-                                selection.add(&ResourceCounts::from_resource(resource, 1));
+                            let selected = ui_state.discard_selection().amount(resource);
+                            if response.clicked() && selected < count && ui_state.discard_selection().count() < required {
+                                ui_state.add_discard_selection(ResourceCounts::from_resource(resource, 1));
                             }
                             if response.secondary_clicked() && selected > 0 {
-                                selection.remove(&ResourceCounts::from_resource(resource, 1));
+                                ui_state.remove_discard_selection(ResourceCounts::from_resource(resource, 1));
                             }
 
                         }

@@ -1,10 +1,11 @@
-use crate::{theme, UiAction, hand_over_button, player_color};
+use crate::{theme, hand_over_button, player_color};
 use catan::{GameStatus};
 use eframe::egui;
 use eframe::egui::{Align2, Ui};
+use catan_protocol::ClientMessage;
 use crate::game_view::GameView;
 
-pub(crate) fn show(ui: &mut Ui, game: &GameView) -> Vec<UiAction> {
+pub(crate) fn show(ui: &mut Ui, game: &GameView) -> Vec<ClientMessage> {
     let mut actions = Vec::new();
 
     egui::Area::new(egui::Id::new("next_player"))
@@ -19,7 +20,7 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView) -> Vec<UiAction> {
                 )
                 .clicked()
                 {
-                    actions.push(UiAction::NextPlayer);
+                    actions.push(ClientMessage::EndTurn);
                 }
             }
         });

@@ -581,7 +581,8 @@ dependencies = [
  "catan-protocol",
  "eframe",
  "egui",
- "log",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]

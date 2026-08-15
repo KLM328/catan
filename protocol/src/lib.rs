@@ -7,7 +7,7 @@ mod token;
 pub use server_error::ServerError;
 pub use token::Token;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum ClientMessage {
     BuildRoad(EdgeId),
     BuildSettlement(VertexId),
@@ -19,6 +19,7 @@ pub enum ClientMessage {
     EndTurn,
     Join {token : Option<Token>},
     StartGame,
+    Sync
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
