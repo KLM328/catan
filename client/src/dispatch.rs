@@ -9,6 +9,7 @@ pub(crate) fn apply(
     ui_state: &mut UiState,
     incoming_message: ServerMessage,
     messages: &mut Vec<ClientMessage>,
+    now : f64
 ) {
     match incoming_message {
         ServerMessage::BuildRoad(player, edge, status) => {
@@ -81,7 +82,7 @@ pub(crate) fn apply(
             }
         }
         ServerMessage::Leave(player) => {
-            ui_state.set_message(format!("Le joueur {} à quitté la partie", player.value()));
+            ui_state.set_message(format!("Le joueur {} à quitté la partie", player.value()), now);
         }
         ServerMessage::Sync(game) => *app_state = AppState::Playing(GameView::from(game)),
         ServerMessage::LobbyView {
@@ -91,11 +92,11 @@ pub(crate) fn apply(
         } => {
             *app_state = AppState::Lobby { players };
         }
-        ServerMessage::StartGame(_view) => {
-            todo!("afficher les lancés de dés")
+        ServerMessage::StartGame(rolls) => {
+            ui_state.set_rolls_display(rolls, now);
         }
         ServerMessage::Error(error) => {
-            ui_state.set_message(error.to_string());
+            ui_state.set_message(error.to_string(), now);
         }
         ServerMessage::JoinGame(_) => {}
         ServerMessage::PauseGame => {

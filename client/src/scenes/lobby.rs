@@ -1,8 +1,8 @@
 use catan_protocol::{ClientMessage, PlayerInfo};
 use crate::app::UiState;
-use crate::panels::message;
+use crate::panels::{message, rolls};
 
-pub(crate) fn show(ui: &mut egui::Ui, ui_state: &UiState,players: &Vec<PlayerInfo>, messages: &mut Vec<ClientMessage>) {
+pub(crate) fn show(ui: &mut egui::Ui, ui_state: &UiState, players: &Vec<PlayerInfo>, messages: &mut Vec<ClientMessage>) {
     let grid = egui::Grid::new("lobby");
     grid.show(ui, |ui| {
         ui.heading("Joueurs en ligne");
@@ -15,4 +15,7 @@ pub(crate) fn show(ui: &mut egui::Ui, ui_state: &UiState,players: &Vec<PlayerInf
     };
 
     message::show(ui, ui_state);
+
+    rolls::show(ui, players, ui_state);
+
 }

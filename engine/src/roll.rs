@@ -37,7 +37,7 @@ impl From<Roll> for (u8, u8) {
 }
 
 impl Roll {
-    pub(crate) fn value(self) -> u8 {
+    pub fn value(self) -> u8 {
         self.dice1 + self.dice2
     }
 

@@ -1,10 +1,7 @@
 use crate::panels::message;
 use crate::scenes::{connecting, lobby, playing, menu};
 use crate::{dispatch, BuildMode, GameView};
-use catan::{
-    ResourceCounts, Roll
-    ,
-};
+use catan::{PlayerId, ResourceCounts, Roll};
 use catan_protocol::{ClientMessage, PlayerInfo, ServerMessage};
 use eframe::egui;
 use tokio::sync::mpsc::error::TrySendError;
@@ -29,6 +26,7 @@ pub(crate) struct UiState {
     message: Option<(String, f64)>,
     build_mode: BuildMode,
     discard_selection: ResourceCounts,
+    rolls_display: Option<(Vec<(PlayerId, Roll)>, f64)>,
 }
 
 impl UiState {
@@ -72,12 +70,20 @@ impl UiState {
         self.message.clone()
     }
 
-    pub(crate) fn set_message(&mut self, message: String) {
-        self.message = Some((message, 10.0));
+    pub(crate) fn set_message(&mut self, message: String, now : f64) {
+        self.message = Some((message, now));
     }
 
     pub(crate) fn set_last_roll(&mut self, roll: Roll) {
         self.last_roll = Some(roll);
+    }
+
+    pub(crate) fn rolls_display(&self) -> Option<(Vec<(PlayerId, Roll)>, f64)> {
+        self.rolls_display.clone()
+    }
+
+    pub(crate) fn set_rolls_display(&mut self, rolls: Vec<(PlayerId, Roll)>, now : f64) {
+        self.rolls_display = Some((rolls, now));
     }
 }
 
@@ -89,6 +95,7 @@ impl Default for UiState {
             message: None,
             build_mode: BuildMode::None,
             discard_selection: Default::default(),
+            rolls_display: None,
         }
     }
 }
@@ -126,7 +133,8 @@ impl eframe::App for CatanApp {
         let mut messages = Vec::new();
 
         while let Ok(server_message) = self.rx.try_recv() {
-            dispatch::apply(&mut self.state, &mut self.ui, server_message, &mut messages);
+            let now = ui.input(|i| i.time);
+            dispatch::apply(&mut self.state, &mut self.ui, server_message, &mut messages, now);
         }
         let ctx = ui.ctx().clone();
 

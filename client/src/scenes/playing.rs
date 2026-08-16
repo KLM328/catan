@@ -2,7 +2,7 @@ use egui::Ui;
 use catan_protocol::ClientMessage;
 use crate::UiState;
 use crate::game_view::GameView;
-use crate::panels::{actions, board, dice, end, hand, infos, next_player};
+use crate::panels::{actions, board, dice, end, hand, infos, message, next_player, rolls};
 
 pub(crate) fn show(ui : &mut Ui, game : &GameView, ui_state : &mut UiState, actions : &mut Vec<ClientMessage>) {
     infos::show(ui, game);
@@ -20,4 +20,9 @@ pub(crate) fn show(ui : &mut Ui, game : &GameView, ui_state : &mut UiState, acti
     actions::show(ui, game, ui_state);
 
     end::show(ui, game);
+
+    message::show(ui, ui_state);
+
+    rolls::show(ui, game.players(), ui_state);
+
 }

@@ -96,6 +96,10 @@ impl GameView {
             Some(index) => {self.current_turn = index; Ok(())}
         }
     }
+    
+    pub(crate) fn players(&self) -> &[PlayerInfo] {
+        &self.players
+    }
 
 
 }

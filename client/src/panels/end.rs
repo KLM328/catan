@@ -65,9 +65,9 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView) {
                     }
                     ui.end_row();
                     let mut players: Vec<(PlayerId, &PlayerInfo)> = game
-                        .turn_order()
+                        .players()
                         .iter()
-                        .map(|&p| (p, game.get_player(p).unwrap()))
+                        .map(|p| (p.id, p))
                         .collect();
                     players.sort_by_key(|&(_ , player)| Reverse(game.score(player))); //les scores sont faux, il faudra envoyer les infos correcte via un message server
 
