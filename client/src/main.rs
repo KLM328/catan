@@ -8,7 +8,7 @@ mod dispatch;
 mod network;
 
 pub(crate) use theme::{player_color, resource_color, terrain_color};
-pub(crate) use widgets::{action_button, disc_button, draw_die, hand_over_button, player_row, player_disc, card, badge};
+pub(crate) use widgets::{action_button, disc_button, draw_die, end_turn_button, player_row, player_disc, card, badge};
 pub(crate) use panels::board::BuildMode;
 pub(crate) use game_view::GameView;
 

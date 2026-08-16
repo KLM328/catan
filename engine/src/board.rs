@@ -360,7 +360,7 @@ impl Board {
         Ok(())
     }
 
-    pub fn move_robber(&mut self, tile_id: TileId) -> Result<(), InvalidAction> {
+    pub(crate) fn move_robber(&mut self, tile_id: TileId) -> Result<(), InvalidAction> {
         let option_tile = self.tiles.get(tile_id.value());
         match option_tile {
             Some(_) => {
@@ -439,6 +439,23 @@ impl Board {
         victims.sort_by_key(|p| p.value());
         victims.dedup();
         victims
+    }
+}
+
+/// Application de faits déjà validés par le serveur.
+///
+/// Ces méthodes NE VÉRIFIENT AUCUNE RÈGLE. Elles n'existent que pour
+/// qu'un client reconstruise un état décidé ailleurs. Toute règle de jeu
+/// doit passer par `place_`.
+impl Board {
+    pub fn apply_settlement(&mut self, vertex: VertexId, building: Building) {
+        self.buildings[vertex.value()] = Some(building);
+    }
+    pub fn apply_road(&mut self, edge: EdgeId, owner: PlayerId) {
+        self.roads[edge.value()] = Some(owner);
+    }
+    pub fn apply_robber(&mut self, tile: TileId) {
+        self.robber = tile;
     }
 }
 

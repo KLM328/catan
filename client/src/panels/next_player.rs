@@ -1,4 +1,4 @@
-use crate::{theme, hand_over_button, player_color};
+use crate::{theme, end_turn_button, player_color};
 use catan::{GameStatus};
 use eframe::egui;
 use eframe::egui::{Align2, Ui};
@@ -12,11 +12,8 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView) -> Vec<ClientMessage> {
         .anchor(Align2::RIGHT_TOP, egui::vec2(- theme::SIDE_PANEL_W -24.0, 24.0))
         .show(ui.ctx(), |ui| {
             if let GameStatus::PlayingActions = game.status() {
-                let next_player = game.get_player(game.get_next_player()).unwrap();
-                if hand_over_button(
-                    ui,
-                    player_color(next_player),
-                    next_player.color().color_name(),
+                if end_turn_button(
+                    ui
                 )
                 .clicked()
                 {

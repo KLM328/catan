@@ -1,4 +1,4 @@
-use catan::{Board, Cost, GameStatus, Hand, PlayerId, ResourceError};
+use catan::{Board, Building, BuildingKind, Cost, EdgeId, GameError, GameStatus, Hand, PlayerId, ResourceError, TileId, VertexId};
 use catan_protocol::{GameSnapshot, PlayerInfo};
 
 #[derive(Debug, Clone)]
@@ -56,10 +56,6 @@ impl GameView {
         &self.status
     }
 
-    pub fn get_next_player(&self) -> PlayerId {
-        self.turn_order[(self.current_turn + 1) % self.turn_order.len()]
-    }
-
     pub fn can_pay(&self, cost : &Cost) -> Result<(), ResourceError> {
         self.my_hand.can_pay(cost)
     }
@@ -71,13 +67,38 @@ impl GameView {
     pub(crate) fn my_id(&self) -> PlayerId {
         self.my_id
     }
-    
-    pub(crate) fn next_player(&self) -> PlayerId {
-        self.turn_order[(self.current_turn + 1) % self.turn_order.len()]
-    }
-    
+
     pub(crate) fn win(&mut self, winner: PlayerId) {
         self.status = GameStatus::End {winner}
+    }
+
+    pub(crate) fn update_player(&mut self, player: PlayerInfo) {
+        if let Some(p) = self.players.iter_mut().find(|p| p.id == player.id) {
+            *p = player.clone();
+        }
+    }
+
+    pub(crate) fn set_status(&mut self, status : GameStatus){
+        self.status = status;
+    }
+
+    pub(crate) fn set_building(&mut self, vertex : VertexId, building: Building){
+        self.board.apply_settlement(vertex, building);
+    }
+    
+    pub(crate) fn set_road(&mut self, edge : EdgeId, player : PlayerId){
+        self.board.apply_road(edge, player);
+    }
+    
+    pub(crate) fn set_robber(&mut self, tile : TileId){
+        self.board.apply_robber(tile);
+    }
+    
+    pub(crate) fn set_current_turn(&mut self, player : PlayerId) -> Result<(), GameError>{
+        match self.turn_order.iter().position(|&p| p == player) {
+            None => {Err(GameError::PlayerNotFound(player))}
+            Some(index) => {self.current_turn = index; Ok(())}
+        }
     }
 
 

@@ -89,8 +89,8 @@ impl GameSnapshot {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum ServerMessage {
-    BuildRoad(PlayerInfo, EdgeId),
-    BuildSettlement(PlayerInfo, VertexId),
+    BuildRoad(PlayerInfo, EdgeId, GameStatus),
+    BuildSettlement(PlayerInfo, VertexId, GameStatus),
     UpgradeCity(PlayerInfo, VertexId),
     StealNotification {
         robber: PlayerInfo,
@@ -103,7 +103,7 @@ pub enum ServerMessage {
     },
     Discard(PlayerInfo),
     NewRobberLocation(TileId),
-    Roll(Roll, RollOutcome),
+    Roll(Roll, RollOutcome, GameStatus),
     NextPlayer(PlayerInfo),
     GameEnd {
         winner: PlayerId,
@@ -201,8 +201,8 @@ mod tests {
         let p2 = dummy_player_info(1);
 
         let messages = vec![
-            ServerMessage::BuildRoad(dummy_player_info(0), EdgeId::new(1)),
-            ServerMessage::BuildSettlement(dummy_player_info(0), VertexId::new(2)),
+            ServerMessage::BuildRoad(dummy_player_info(0), EdgeId::new(1), GameStatus::FirstPlacementSettlement),
+            ServerMessage::BuildSettlement(dummy_player_info(0), VertexId::new(2), GameStatus::PlayingActions),
             ServerMessage::UpgradeCity(dummy_player_info(0), VertexId::new(3)),
             ServerMessage::StealNotification {
                 robber: dummy_player_info(0),
@@ -220,6 +220,7 @@ mod tests {
                     dummy_player_info(0).id,
                     [0, 2, 0, 0, 1],
                 )])),
+                GameStatus::PlayingActions
             ),
             ServerMessage::NextPlayer(dummy_player_info(1)),
             ServerMessage::GameEnd {
