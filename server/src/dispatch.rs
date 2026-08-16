@@ -32,11 +32,11 @@ fn build_messages(
     match msg {
         ClientMessage::BuildRoad(edge) => {
             game_state.game_mut().build_road(player_id, edge)?;
-            messages.extend(game_state.broadcast(ServerMessage::BuildRoad(game_state.player_info(player_id)?, edge, game_state.game().status())));
+            messages.extend(game_state.broadcast(ServerMessage::BuildRoad(game_state.player_info(player_id)?, edge, game_state.state())));
         }
         ClientMessage::BuildSettlement(vertex) => {
             game_state.game_mut().build_settlement(player_id, vertex)?;
-            messages.extend(game_state.broadcast(ServerMessage::BuildSettlement(game_state.player_info(player_id)?, vertex, game_state.game().status())));
+            messages.extend(game_state.broadcast(ServerMessage::BuildSettlement(game_state.player_info(player_id)?, vertex, game_state.state())));
         }
         ClientMessage::UpgradeCity(vertex) => {
             game_state.game_mut().upgrade_settlement_to_city(player_id, vertex)?;
@@ -81,11 +81,11 @@ fn build_messages(
         ClientMessage::Roll => {
             let roll = Roll::random();
             let outcome = game_state.game_mut().apply_roll(player_id, roll)?;
-            messages.extend(game_state.broadcast(ServerMessage::Roll(roll, outcome, game_state.game().status())));
+            messages.extend(game_state.broadcast(ServerMessage::Roll(roll, outcome, game_state.state())));
         }
         ClientMessage::EndTurn => {
             game_state.game_mut().next_player(player_id)?;
-            messages.extend(game_state.broadcast(ServerMessage::NextPlayer(game_state.player_info(player_id)?)));
+            messages.extend(game_state.broadcast(ServerMessage::NextPlayer(game_state.state())));
         }
         ClientMessage::StartGame => {
             if player_id == game_state.game().sorted_player()[0].0 {

@@ -12,20 +12,22 @@ pub(crate) fn apply(
     now : f64
 ) {
     match incoming_message {
-        ServerMessage::BuildRoad(player, edge, status) => {
+        ServerMessage::BuildRoad(player, edge, state) => {
             if let AppState::Playing(view) = app_state {
                 view.set_road(edge, player.id());
                 view.update_player(player);
-                view.set_status(status);
+                view.set_status(state.status);
+                view.set_current_turn(state.current_turn)
             } else {
                 messages.push(ClientMessage::Sync)
             }
         }
-        ServerMessage::BuildSettlement(player, vertex, status) => {
+        ServerMessage::BuildSettlement(player, vertex, state) => {
             if let AppState::Playing(view) = app_state {
                 view.set_building(vertex, Building::new(BuildingKind::Settlement, player.id()));
                 view.update_player(player);
-                view.set_status(status);
+                view.set_status(state.status);
+                view.set_current_turn(state.current_turn)
             } else {
                 messages.push(ClientMessage::Sync);
             }
@@ -54,19 +56,19 @@ pub(crate) fn apply(
                 messages.push(ClientMessage::Sync)
             }
         }
-        ServerMessage::Roll(roll, _, status) => {
+        ServerMessage::Roll(roll, _, state) => {
             if let AppState::Playing(view) = app_state {
                 ui_state.set_last_roll(roll);
-                view.set_status(status);
+                view.set_status(state.status);
+                view.set_current_turn(state.current_turn)
             } else {
                 messages.push(ClientMessage::Sync)
             }
         }
-        ServerMessage::NextPlayer(player) => {
+        ServerMessage::NextPlayer(state) => {
             if let AppState::Playing(view) = app_state {
-                if  view.set_current_turn(player.id()).is_err() {
-                    messages.push(ClientMessage::Sync)
-                }
+                view.set_status(state.status);
+                view.set_current_turn(state.current_turn)
             } else {
                 messages.push(ClientMessage::Sync)
             }

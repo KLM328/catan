@@ -25,6 +25,8 @@ pub(crate) fn show(
         actions.extend(steal::show(ui, game));
 
         ui.label(format!("Statut : {:?}", game.status()));
+        ui.label(format!("Joueur : {:?}", game.current_player()));
+
 
         // On réserve toute la place restante et on récupère un pinceau.
         let available = ui.available_size();

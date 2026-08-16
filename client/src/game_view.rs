@@ -1,4 +1,4 @@
-use catan::{Board, Building, Cost, EdgeId, GameError, GameStatus, Hand, PlayerId, ResourceError, TileId, VertexId};
+use catan::{Board, Building, Cost, EdgeId, GameStatus, Hand, PlayerId, ResourceError, TileId, VertexId};
 use catan_protocol::{GameSnapshot, PlayerInfo};
 
 #[derive(Debug, Clone)]
@@ -90,15 +90,16 @@ impl GameView {
         self.board.apply_robber(tile);
     }
 
-    pub(crate) fn set_current_turn(&mut self, player : PlayerId) -> Result<(), GameError>{
-        match self.turn_order.iter().position(|&p| p == player) {
-            None => {Err(GameError::PlayerNotFound(player))}
-            Some(index) => {self.current_turn = index; Ok(())}
-        }
+    pub(crate) fn set_current_turn(&mut self, current_turn : usize) {
+        self.current_turn = current_turn
     }
-    
+
     pub(crate) fn players(&self) -> &[PlayerInfo] {
         &self.players
+    }
+
+    pub(crate) fn is_my_turn(&self) -> bool {
+        self.current_player() == self.my_id()
     }
 
 

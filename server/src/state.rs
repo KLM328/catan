@@ -1,5 +1,5 @@
 use catan::{Game, GameError, GameStatus, Player, PlayerId};
-use catan_protocol::{PlayerInfo, ServerError, ServerMessage, Token};
+use catan_protocol::{PlayerInfo, ServerError, ServerMessage, StateUpdate, Token};
 use std::collections::HashMap;
 use tokio::sync::mpsc::Sender;
 use tokio::time::Instant;
@@ -101,5 +101,12 @@ impl GameState {
     
     pub(crate) fn broadcast(&self, message: ServerMessage) -> Vec<(Sender<ServerMessage>, ServerMessage)>{
         self.connected_players().iter().map(|&p| (self.sender(p).unwrap(), message.clone())).collect()
+    }
+    
+    pub(crate) fn state(&self) -> StateUpdate {
+        StateUpdate {
+            status: self.game.status(),
+            current_turn: self.game.current_player_index(),
+        }
     }
 }

@@ -11,7 +11,7 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView, ui_state: &mut UiState) -> Vec<
         .anchor(Align2::RIGHT_BOTTOM, egui::vec2(-theme::SIDE_PANEL_W -24.0, -24.0))
         .show(ui.ctx(), |ui| {
             let base = match game.status() {
-                GameStatus::AwaitingRoll => theme::BUTTON_W_H * 1.2,
+                GameStatus::AwaitingRoll => if game.is_my_turn() { theme::BUTTON_W_H * 1.2 } else {0.0},
                 GameStatus::AwaitingSteal
                 | GameStatus::AwaitingDiscard { .. }
                 | GameStatus::PlayingActions

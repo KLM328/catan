@@ -87,10 +87,16 @@ impl GameSnapshot {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Copy)]
+pub struct StateUpdate {
+    pub status: GameStatus,
+    pub current_turn: usize,
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum ServerMessage {
-    BuildRoad(PlayerInfo, EdgeId, GameStatus),
-    BuildSettlement(PlayerInfo, VertexId, GameStatus),
+    BuildRoad(PlayerInfo, EdgeId, StateUpdate),
+    BuildSettlement(PlayerInfo, VertexId, StateUpdate),
     UpgradeCity(PlayerInfo, VertexId),
     StealNotification {
         robber: PlayerInfo,
@@ -103,8 +109,8 @@ pub enum ServerMessage {
     },
     Discard(PlayerInfo),
     NewRobberLocation(TileId),
-    Roll(Roll, RollOutcome, GameStatus),
-    NextPlayer(PlayerInfo),
+    Roll(Roll, RollOutcome, StateUpdate),
+    NextPlayer(StateUpdate),
     GameEnd {
         winner: PlayerId,
     },
@@ -199,10 +205,15 @@ mod tests {
     fn test_server_messages_roundtrip() {
         let p1 = dummy_player_info(0);
         let p2 = dummy_player_info(1);
+        
+        let state = StateUpdate {
+            status : GameStatus::PlayingActions,
+            current_turn : 1,
+        };
 
         let messages = vec![
-            ServerMessage::BuildRoad(dummy_player_info(0), EdgeId::new(1), GameStatus::FirstPlacementSettlement),
-            ServerMessage::BuildSettlement(dummy_player_info(0), VertexId::new(2), GameStatus::PlayingActions),
+            ServerMessage::BuildRoad(dummy_player_info(0), EdgeId::new(1), state),
+            ServerMessage::BuildSettlement(dummy_player_info(0), VertexId::new(2), state),
             ServerMessage::UpgradeCity(dummy_player_info(0), VertexId::new(3)),
             ServerMessage::StealNotification {
                 robber: dummy_player_info(0),
@@ -220,9 +231,9 @@ mod tests {
                     dummy_player_info(0).id,
                     [0, 2, 0, 0, 1],
                 )])),
-                GameStatus::PlayingActions
+                state
             ),
-            ServerMessage::NextPlayer(dummy_player_info(1)),
+            ServerMessage::NextPlayer(state),
             ServerMessage::GameEnd {
                 winner: PlayerId::new(0),
             },
