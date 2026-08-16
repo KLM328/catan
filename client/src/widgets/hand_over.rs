@@ -1,7 +1,5 @@
 use eframe::egui;
 use eframe::egui::{Color32, FontId, Sense};
-use crate::widgets::player_disc;
-
 pub(crate) fn end_turn_button(ui: &mut egui::Ui) -> egui::Response {
     const PAD: f32 = 10.0; // marge gauche et droite
 
@@ -9,7 +7,7 @@ pub(crate) fn end_turn_button(ui: &mut egui::Ui) -> egui::Response {
 
     // 1. Mesurer
     let galley = ui.painter().layout_no_wrap(
-        format!("Fin du tour"),
+        "Fin du tour".to_string(),
         FontId::proportional(25.0),
         text_color,
     );
@@ -34,6 +32,6 @@ pub(crate) fn end_turn_button(ui: &mut egui::Ui) -> egui::Response {
         rect.center().y - galley.size().y / 2.0,
     );
     painter.galley(text_pos, galley, text_color);
-    
+
     response
 }

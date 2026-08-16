@@ -21,7 +21,7 @@ pub(crate) async fn handle(
     let mut line = String::new();
 
     let mut join_result = None;
-    while let None = join_result {
+    while join_result.is_none() {
         line.clear();
         match buf_reader.read_line(&mut line).await {
             Ok(0) => {

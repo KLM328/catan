@@ -377,7 +377,7 @@ impl Game {
     }
 
     fn is_player(&self, player_id: PlayerId) -> Result<(), GameError> {
-        if self.players.get(&player_id).is_some() {
+        if self.players.contains_key(&player_id) {
             Ok(())
         } else {
             Err(GameError::PlayerNotFound(player_id))

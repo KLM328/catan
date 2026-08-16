@@ -72,9 +72,9 @@ impl GameSnapshot {
             players: game
                 .players()
                 .iter()
-                .map(|(id, p)| PlayerInfo {
+                .map(|(&id, p)| PlayerInfo {
                     color: p.color(),
-                    id: id.clone(),
+                    id,
                     hand_count: p.hand().count(),
                 })
                 .collect(),
@@ -130,9 +130,9 @@ impl From<(&Game, PlayerId)> for ServerMessage {
                 players: game
                     .players()
                     .iter()
-                    .map(|(id, p)| PlayerInfo {
+                    .map(|(&id, p)| PlayerInfo {
                         color: p.color(),
-                        id : id.clone(),
+                        id,
                         hand_count: 0,
                     })
                     .collect(),
@@ -155,7 +155,7 @@ impl From<ServerError> for ServerMessage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use catan::{BuildingKind, GameError, Production, Terrain};
+    use catan::{GameError, Production, Terrain};
 
     fn assert_serde_roundtrip<T>(message: T)
     where

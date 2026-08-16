@@ -3,7 +3,7 @@ use crate::app::UiState;
 use crate::panels::message;
 
 pub(crate) fn show(ui: &mut egui::Ui, ui_state: &UiState,players: &Vec<PlayerInfo>, messages: &mut Vec<ClientMessage>) {
-    let mut grid = egui::Grid::new("lobby");
+    let grid = egui::Grid::new("lobby");
     grid.show(ui, |ui| {
         ui.heading("Joueurs en ligne");
         for player in players {
@@ -13,6 +13,6 @@ pub(crate) fn show(ui: &mut egui::Ui, ui_state: &UiState,players: &Vec<PlayerInf
     if ui.button("Start").clicked() {
         messages.push(ClientMessage::StartGame);
     };
-    
+
     message::show(ui, ui_state);
 }

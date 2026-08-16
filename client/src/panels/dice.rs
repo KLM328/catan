@@ -1,10 +1,8 @@
-use crate::{draw_die, theme};
-use catan::{GameStatus, Roll};
+use crate::{draw_die, theme, GameView, UiState};
+use catan::{GameStatus};
 use eframe::egui;
 use eframe::egui::{Align2, Color32, Sense, Ui};
 use catan_protocol::ClientMessage;
-use crate::app::UiState;
-use crate::game_view::GameView;
 
 pub(crate) fn show(ui: &mut Ui, game: &GameView, ui_state: &mut UiState) -> Vec<ClientMessage> {
     let mut actions = Vec::new();

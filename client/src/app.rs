@@ -20,7 +20,6 @@ pub(crate) enum AppState {
 
 #[derive(Debug)]
 enum AppError {
-    InvalidState,
     SenderIsFull,
 }
 
@@ -76,7 +75,7 @@ impl UiState {
     pub(crate) fn set_message(&mut self, message: String) {
         self.message = Some((message, 10.0));
     }
-    
+
     pub(crate) fn set_last_roll(&mut self, roll: Roll) {
         self.last_roll = Some(roll);
     }
@@ -111,19 +110,6 @@ impl CatanApp {
         }
     }
 
-    pub(crate) fn game(&self) -> Result<&GameView, AppError> {
-        if let AppState::Playing(game) = &self.state {
-            Ok(game)
-        } else {
-            Err(AppError::InvalidState)
-        }
-    }
-
-    fn ask_sync(&self) -> Result<(), AppError> {
-        self.send(ClientMessage::Sync)?;
-        Ok(())
-    }
-
     fn send(&self, message: ClientMessage) -> Result<(), AppError> {
         match self.tx.try_send(message) {
             Ok(_) => Ok(()),
@@ -138,7 +124,7 @@ impl CatanApp {
 impl eframe::App for CatanApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let mut messages = Vec::new();
-        
+
         while let Ok(server_message) = self.rx.try_recv() {
             dispatch::apply(&mut self.state, &mut self.ui, server_message, &mut messages);
         }
@@ -176,16 +162,13 @@ impl eframe::App for CatanApp {
 
         message::show(ui, &self.ui);
 
-        while let Some(message) = messages.get(0).cloned() {
+        while let Some(message) = messages.first().cloned() {
             match self.send(message) {
                 Ok(_) => {
                     messages.remove(0);
                 }
                 Err(AppError::SenderIsFull) => {
                     break;
-                }
-                Err(e) => {
-                    panic!("{:?}", e)
                 }
             }
         }

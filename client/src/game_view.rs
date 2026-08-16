@@ -1,4 +1,4 @@
-use catan::{Board, Building, BuildingKind, Cost, EdgeId, GameError, GameStatus, Hand, PlayerId, ResourceError, TileId, VertexId};
+use catan::{Board, Building, Cost, EdgeId, GameError, GameStatus, Hand, PlayerId, ResourceError, TileId, VertexId};
 use catan_protocol::{GameSnapshot, PlayerInfo};
 
 #[derive(Debug, Clone)]
@@ -44,10 +44,6 @@ impl GameView {
         &self.board
     }
 
-    pub(crate) fn board_mut(&mut self) -> &mut Board {
-        &mut self.board
-    }
-
     pub(crate) fn score(&self, player: &PlayerInfo) -> u8 {
         self.board.buildings().iter().flatten().filter(|&&b| b.owner() == player.id).map(|&b| b.kind().points()).sum()
     }
@@ -85,15 +81,15 @@ impl GameView {
     pub(crate) fn set_building(&mut self, vertex : VertexId, building: Building){
         self.board.apply_settlement(vertex, building);
     }
-    
+
     pub(crate) fn set_road(&mut self, edge : EdgeId, player : PlayerId){
         self.board.apply_road(edge, player);
     }
-    
+
     pub(crate) fn set_robber(&mut self, tile : TileId){
         self.board.apply_robber(tile);
     }
-    
+
     pub(crate) fn set_current_turn(&mut self, player : PlayerId) -> Result<(), GameError>{
         match self.turn_order.iter().position(|&p| p == player) {
             None => {Err(GameError::PlayerNotFound(player))}

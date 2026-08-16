@@ -5,8 +5,8 @@ use egui::{Align2, Color32, Sense, Stroke};
 use catan_protocol::ClientMessage;
 use crate::app::UiState;
 use crate::game_view::GameView;
-use crate::theme::{player_color, resource_color};   
-use crate::widgets::{badge, card};
+use crate::{player_color, resource_color};
+use crate::{badge, card};
 
 pub(crate) fn show(ui: &mut Ui, game: &GameView, ui_state: &mut UiState) -> Vec<ClientMessage>{
 
@@ -31,7 +31,7 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView, ui_state: &mut UiState) -> Vec<
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
                     if let Some(required) = required && ui_state.discard_selection().count() == required && ui.button("Défausser").clicked() {
-                            actions.push(ClientMessage::Discard(ui_state.discard_selection().clone()));
+                            actions.push(ClientMessage::Discard(*ui_state.discard_selection()));
                     }
                     let c = player_color(player);
                     let label = match required {

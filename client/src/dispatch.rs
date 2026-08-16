@@ -63,7 +63,7 @@ pub(crate) fn apply(
         }
         ServerMessage::NextPlayer(player) => {
             if let AppState::Playing(view) = app_state {
-                if let Err(_) = view.set_current_turn(player.id()) {
+                if  view.set_current_turn(player.id()).is_err() {
                     messages.push(ClientMessage::Sync)
                 }
             } else {
@@ -85,19 +85,19 @@ pub(crate) fn apply(
         }
         ServerMessage::Sync(game) => *app_state = AppState::Playing(GameView::from(game)),
         ServerMessage::LobbyView {
-            player_id,
+            player_id : _,
             players,
-            scenario,
+            scenario : _,
         } => {
             *app_state = AppState::Lobby { players };
         }
-        ServerMessage::StartGame(game) => {
+        ServerMessage::StartGame(_view) => {
             todo!("afficher les lancés de dés")
         }
         ServerMessage::Error(error) => {
             ui_state.set_message(error.to_string());
         }
-        ServerMessage::JoinGame(token) => {}
+        ServerMessage::JoinGame(_) => {}
         ServerMessage::PauseGame => {
             if let AppState::Playing(view) = app_state {
                 *app_state = AppState::Paused(view.clone())
