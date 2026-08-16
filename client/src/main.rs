@@ -35,7 +35,7 @@ fn main() -> eframe::Result {
             let ctx = cc.egui_ctx.clone();
             std::thread::spawn(move || {
                 let rt = tokio::runtime::Runtime::new().unwrap();
-                rt.block_on(network::run("127.0.0.1:8080", to_server_rx, to_ui_tx, ctx));
+                rt.block_on(network::run("127.0.0.1:8888", to_server_rx, to_ui_tx, ctx));
             });
             Ok(Box::new(CatanApp::new(to_server_tx, to_ui_rx)))
         }),

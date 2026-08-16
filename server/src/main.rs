@@ -16,7 +16,7 @@ async fn main() {
     let game_state : Arc<Mutex<GameState>> = Arc::new(Mutex::new(GameState::new(Game::new(Scenario::standard()), true)));
 
 
-    let listener = TcpListener::bind("127.0.0.1:8080").await.unwrap();
+    let listener = TcpListener::bind("127.0.0.1:8888").await.unwrap();
     loop {
         let (socket, addr) = listener.accept().await.unwrap();
         println!("connexion de {addr}");

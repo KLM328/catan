@@ -19,7 +19,7 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView, ui_state: &mut UiState) -> Vec<
                 GameStatus::AwaitingDiscard { must_discard } => {
                     match must_discard.iter().flatten().find(|&&(p, _)| p == game.my_id()){
                         Some(&(_, amount)) => Some(amount),
-                        None => return,
+                        None => None,
                     }
                 }
                 _ => None
@@ -32,6 +32,7 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView, ui_state: &mut UiState) -> Vec<
                 ui.horizontal(|ui| {
                     if let Some(required) = required && ui_state.discard_selection().count() == required && ui.button("Défausser").clicked() {
                             actions.push(ClientMessage::Discard(*ui_state.discard_selection()));
+                        ui_state.reset_discard_selection();
                     }
                     let c = player_color(player);
                     let label = match required {

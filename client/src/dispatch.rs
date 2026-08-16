@@ -3,6 +3,7 @@ use crate::app::UiState;
 use crate::game_view::GameView;
 use catan::{Building, BuildingKind};
 use catan_protocol::{ClientMessage, ServerMessage};
+use crate::panels::board::BuildMode;
 
 pub(crate) fn apply(
     app_state: &mut AppState,
@@ -17,7 +18,9 @@ pub(crate) fn apply(
                 view.set_road(edge, player.id());
                 view.update_player(player);
                 view.set_status(state.status);
-                view.set_current_turn(state.current_turn)
+                view.set_current_turn(state.current_turn);
+                ui_state.switch_buimd_mode(BuildMode::None)
+
             } else {
                 messages.push(ClientMessage::Sync)
             }
@@ -27,7 +30,9 @@ pub(crate) fn apply(
                 view.set_building(vertex, Building::new(BuildingKind::Settlement, player.id()));
                 view.update_player(player);
                 view.set_status(state.status);
-                view.set_current_turn(state.current_turn)
+                view.set_current_turn(state.current_turn);
+                ui_state.switch_buimd_mode(BuildMode::None)
+
             } else {
                 messages.push(ClientMessage::Sync);
             }
@@ -36,27 +41,44 @@ pub(crate) fn apply(
             if let AppState::Playing(view) = app_state {
                 view.set_building(vertex, Building::new(BuildingKind::City, player.id()));
                 view.update_player(player);
+                ui_state.switch_buimd_mode(BuildMode::None)
+
             } else {
                 messages.push(ClientMessage::Sync)
             }
         }
-        ServerMessage::StealNotification { .. } => {
-            todo!()
+        ServerMessage::Steal { robber, victim, state } => {
+            if let AppState::Playing(view) = app_state {
+                view.update_player(robber);
+                view.set_status(state.status);
+                view.set_current_turn(state.current_turn);
+                if let Some(victim) = victim {
+                    view.update_player(victim);
+                }
+            } else {
+                messages.push(ClientMessage::Sync)
+            }
         }
-        ServerMessage::StealConfirmation { .. } => {
-            todo!()
+
+        ServerMessage::Discard(player, state) => {
+            if let AppState::Playing(view) = app_state {
+                view.update_player(player);
+                view.set_status(state.status);
+                view.set_current_turn(state.current_turn);
+            } else {
+                messages.push(ClientMessage::Sync)
+            }
         }
-        ServerMessage::Discard(_) => {
-            todo!()
-        }
-        ServerMessage::NewRobberLocation(tile) => {
+        ServerMessage::NewRobberLocation(tile, state) => {
             if let AppState::Playing(view) = app_state {
                 view.set_robber(tile);
+                view.set_status(state.status);
+                view.set_current_turn(state.current_turn)
             } else {
                 messages.push(ClientMessage::Sync)
             }
         }
-        ServerMessage::Roll(roll, _, state) => {
+        ServerMessage::Roll(roll, state) => {
             if let AppState::Playing(view) = app_state {
                 ui_state.set_last_roll(roll);
                 view.set_status(state.status);
@@ -68,14 +90,16 @@ pub(crate) fn apply(
         ServerMessage::NextPlayer(state) => {
             if let AppState::Playing(view) = app_state {
                 view.set_status(state.status);
-                view.set_current_turn(state.current_turn)
+                view.set_current_turn(state.current_turn);
+                ui_state.switch_buimd_mode(BuildMode::None)
             } else {
                 messages.push(ClientMessage::Sync)
             }
         }
-        ServerMessage::GameEnd { winner } => {
-            if let AppState::Playing(game) = app_state {
-                game.win(winner);
+        ServerMessage::GameEnd(state) => {
+            if let AppState::Playing(view) = app_state {
+                view.set_status(state.status);
+                view.set_current_turn(state.current_turn)
             }
         }
         ServerMessage::PlayerJoined(player) => {
@@ -111,6 +135,13 @@ pub(crate) fn apply(
         ServerMessage::ResumeGame => {
             if let AppState::Paused(view) = app_state {
                 *app_state = AppState::Playing(view.clone())
+            } else {
+                messages.push(ClientMessage::Sync)
+            }
+        }
+        ServerMessage::HandUpdate(hand) => {
+            if let AppState::Paused(view) = app_state {
+                view.set_hand(hand)
             } else {
                 messages.push(ClientMessage::Sync)
             }

@@ -49,10 +49,14 @@ impl Hand {
         self.0.amount(resource)
     }
 
-    pub(crate) fn add(&mut self, resources : ResourceCounts){
+    pub fn add(&mut self, resources : ResourceCounts){
         self.0.add(&resources);
     }
 
+    pub fn remove(&mut self, resources : ResourceCounts){
+        self.0.remove(&resources);
+    }
+    
     pub(crate) fn is_empty(&self) -> bool {
         self.count() == 0
     }

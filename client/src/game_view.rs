@@ -64,10 +64,6 @@ impl GameView {
         self.my_id
     }
 
-    pub(crate) fn win(&mut self, winner: PlayerId) {
-        self.status = GameStatus::End {winner}
-    }
-
     pub(crate) fn update_player(&mut self, player: PlayerInfo) {
         if let Some(p) = self.players.iter_mut().find(|p| p.id == player.id) {
             *p = player.clone();
@@ -102,5 +98,8 @@ impl GameView {
         self.current_player() == self.my_id()
     }
 
+    pub(crate) fn set_hand(&mut self, hand : Hand){
+        self.my_hand = hand;
+    }
 
 }

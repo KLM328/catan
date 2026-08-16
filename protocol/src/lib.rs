@@ -1,4 +1,4 @@
-use catan::{Board, EdgeId, Game, GameStatus, Hand, Player, PlayerColor, PlayerId, ResourceCounts, Roll, RollOutcome, Scenario, TileId, VertexId};
+use catan::{Board, EdgeId, Game, GameStatus, Hand, Player, PlayerColor, PlayerId, ResourceCounts, Roll, Scenario, TileId, VertexId};
 use serde::{Deserialize, Serialize};
 
 mod server_error;
@@ -95,25 +95,20 @@ pub struct StateUpdate {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum ServerMessage {
+    HandUpdate(Hand),
     BuildRoad(PlayerInfo, EdgeId, StateUpdate),
     BuildSettlement(PlayerInfo, VertexId, StateUpdate),
     UpgradeCity(PlayerInfo, VertexId),
-    StealNotification {
+    Steal {
         robber: PlayerInfo,
         victim: Option<PlayerInfo>,
+        state : StateUpdate,
     },
-    StealConfirmation {
-        robber: PlayerInfo,
-        victim: PlayerInfo,
-        resource: ResourceCounts,
-    },
-    Discard(PlayerInfo),
-    NewRobberLocation(TileId),
-    Roll(Roll, RollOutcome, StateUpdate),
+    Discard(PlayerInfo, StateUpdate),
+    NewRobberLocation(TileId, StateUpdate),
+    Roll(Roll, StateUpdate),
     NextPlayer(StateUpdate),
-    GameEnd {
-        winner: PlayerId,
-    },
+    GameEnd(StateUpdate),
     PlayerJoined(PlayerInfo),
     Leave(PlayerId),
     Sync(GameSnapshot),
@@ -161,7 +156,7 @@ impl From<ServerError> for ServerMessage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use catan::{GameError, Production, Terrain};
+    use catan::{GameError, Terrain};
 
     fn assert_serde_roundtrip<T>(message: T)
     where
@@ -215,28 +210,22 @@ mod tests {
             ServerMessage::BuildRoad(dummy_player_info(0), EdgeId::new(1), state),
             ServerMessage::BuildSettlement(dummy_player_info(0), VertexId::new(2), state),
             ServerMessage::UpgradeCity(dummy_player_info(0), VertexId::new(3)),
-            ServerMessage::StealNotification {
+            ServerMessage::HandUpdate(Hand::default()),
+            ServerMessage::Steal {
                 robber: dummy_player_info(0),
                 victim: Some(dummy_player_info(1)),
+                state
             },
-            ServerMessage::StealConfirmation {
-                robber: dummy_player_info(0),
-                victim: dummy_player_info(1),
-                resource: ResourceCounts::new([1,0,0,0,0]), // Adaptez avec une ressource existante dans `catan::Resource`
-            },
-            ServerMessage::Discard(dummy_player_info(0)),
+            ServerMessage::Discard(dummy_player_info(0), state),
             ServerMessage::Roll(
                 Roll::new(4, 6).unwrap(),
-                RollOutcome::Production(Production::new(&[(
-                    dummy_player_info(0).id,
-                    [0, 2, 0, 0, 1],
-                )])),
                 state
             ),
             ServerMessage::NextPlayer(state),
-            ServerMessage::GameEnd {
-                winner: PlayerId::new(0),
-            },
+            ServerMessage::GameEnd(StateUpdate {
+                current_turn : 0,
+                status : GameStatus::End {winner : PlayerId::new(0)},
+            }),
             ServerMessage::PlayerJoined(dummy_player_info(0)),
             ServerMessage::Leave(PlayerId::new(0)),
             ServerMessage::LobbyView {

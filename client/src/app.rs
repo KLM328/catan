@@ -85,6 +85,10 @@ impl UiState {
     pub(crate) fn set_rolls_display(&mut self, rolls: Vec<(PlayerId, Roll)>, now : f64) {
         self.rolls_display = Some((rolls, now));
     }
+    
+    pub(crate) fn reset_discard_selection(&mut self)  {
+        self.discard_selection = ResourceCounts::default()
+    }
 }
 
 impl Default for UiState {

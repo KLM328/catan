@@ -14,7 +14,7 @@ pub(crate) enum StealChoice {
 
 pub(crate) fn show(ui : &mut Ui, game : &GameView) -> Vec<ClientMessage>{
     let mut actions = Vec::new();
-    if matches!(game.status(), GameStatus::AwaitingSteal) {
+    if matches!(game.status(), GameStatus::AwaitingSteal) && game.is_my_turn() {
         // 1. On extrait les données AVANT le closure
         let mut chosen: StealChoice = StealChoice::Pending;
 
