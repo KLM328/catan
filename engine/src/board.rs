@@ -208,7 +208,7 @@ impl Board {
         production
     }
 
-    pub(crate) fn can_place_settlement_during_playing(
+    pub fn can_place_settlement_during_playing(
         &self,
         vertex: VertexId,
         player: PlayerId,
@@ -239,7 +239,7 @@ impl Board {
         }
     }
 
-    pub(crate) fn can_place_settlement_during_placement(
+    pub fn can_place_settlement_during_placement(
         &self,
         vertex: VertexId,
         _: PlayerId,
@@ -264,7 +264,7 @@ impl Board {
         }
     }
 
-    pub(crate) fn can_place_road_during_placement(
+    pub fn can_place_road_during_placement(
         &self,
         edge: EdgeId,
         player: PlayerId,
@@ -304,7 +304,7 @@ impl Board {
         }
     }
 
-    pub(crate) fn can_place_road_during_playing(
+    pub fn can_place_road_during_playing(
         &self,
         edge: EdgeId,
         player: PlayerId,
@@ -334,7 +334,7 @@ impl Board {
 
     }
 
-    pub(crate) fn place_road(
+    pub fn place_road(
         &mut self,
         check_function: impl Fn(&Self, EdgeId, PlayerId) -> Result<(), InvalidAction>,
         edge: EdgeId,
@@ -349,7 +349,7 @@ impl Board {
         }
     }
 
-    pub(crate) fn place_settlement(
+    pub fn place_settlement(
         &mut self,
         check_function: impl Fn(&Self, VertexId, PlayerId) -> Result<(), InvalidAction>,
         vertex: VertexId,
@@ -360,7 +360,7 @@ impl Board {
         Ok(())
     }
 
-    pub(crate) fn move_robber(&mut self, tile_id: TileId) -> Result<(), InvalidAction> {
+    pub fn move_robber(&mut self, tile_id: TileId) -> Result<(), InvalidAction> {
         let option_tile = self.tiles.get(tile_id.value());
         match option_tile {
             Some(_) => {
@@ -399,7 +399,7 @@ impl Board {
         }
     }
 
-    pub(crate) fn upgrade_settlement_to_city(
+    pub fn upgrade_settlement_to_city(
         &mut self,
         vertex: VertexId,
         player: PlayerId,

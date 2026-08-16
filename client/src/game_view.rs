@@ -1,6 +1,7 @@
 use catan::{Board, Cost, GameStatus, Hand, PlayerId, ResourceError};
 use catan_protocol::{GameSnapshot, PlayerInfo};
 
+#[derive(Debug, Clone)]
 pub(crate) struct GameView {
     board: Board,
     my_id: PlayerId,
@@ -43,6 +44,10 @@ impl GameView {
         &self.board
     }
 
+    pub(crate) fn board_mut(&mut self) -> &mut Board {
+        &mut self.board
+    }
+
     pub(crate) fn score(&self, player: &PlayerInfo) -> u8 {
         self.board.buildings().iter().flatten().filter(|&&b| b.owner() == player.id).map(|&b| b.kind().points()).sum()
     }
@@ -65,6 +70,14 @@ impl GameView {
 
     pub(crate) fn my_id(&self) -> PlayerId {
         self.my_id
+    }
+    
+    pub(crate) fn next_player(&self) -> PlayerId {
+        self.turn_order[(self.current_turn + 1) % self.turn_order.len()]
+    }
+    
+    pub(crate) fn win(&mut self, winner: PlayerId) {
+        self.status = GameStatus::End {winner}
     }
 
 

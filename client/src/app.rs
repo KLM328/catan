@@ -14,6 +14,7 @@ pub(crate) enum AppState {
     Menu,
     Connecting,
     Lobby { players: Vec<PlayerInfo> },
+    Paused(GameView),
     Playing(GameView),
 }
 
@@ -75,6 +76,10 @@ impl UiState {
     pub(crate) fn set_message(&mut self, message: String) {
         self.message = Some((message, 10.0));
     }
+    
+    pub(crate) fn set_last_roll(&mut self, roll: Roll) {
+        self.last_roll = Some(roll);
+    }
 }
 
 impl Default for UiState {
@@ -106,7 +111,7 @@ impl CatanApp {
         }
     }
 
-    fn game(&self) -> Result<&GameView, AppError> {
+    pub(crate) fn game(&self) -> Result<&GameView, AppError> {
         if let AppState::Playing(game) = &self.state {
             Ok(game)
         } else {
@@ -132,10 +137,11 @@ impl CatanApp {
 
 impl eframe::App for CatanApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        while let Ok(server_message) = self.rx.try_recv() {
-            dispatch::apply(&mut self.state, &mut self.ui, server_message);
-        }
         let mut messages = Vec::new();
+        
+        while let Ok(server_message) = self.rx.try_recv() {
+            dispatch::apply(&mut self.state, &mut self.ui, server_message, &mut messages);
+        }
         let ctx = ui.ctx().clone();
 
         let physical_h = ctx.content_rect().height() * ctx.pixels_per_point();
@@ -163,6 +169,9 @@ impl eframe::App for CatanApp {
             },
             AppState::Playing(view) => playing::show(ui, view, &mut self.ui, &mut messages),
 
+            AppState::Paused(_) => {
+                todo!()
+            }
         }
 
         message::show(ui, &self.ui);
