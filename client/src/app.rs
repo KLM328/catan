@@ -1,3 +1,6 @@
+use std::ops::Not;
+use std::sync::Arc;
+use std::time::Instant;
 use crate::panels::message;
 use crate::scenes::{connecting, lobby, playing, menu};
 use crate::{dispatch, BuildMode, GameView};
@@ -6,6 +9,7 @@ use catan_protocol::{ClientMessage, PlayerInfo, ServerMessage};
 use eframe::egui;
 use tokio::sync::mpsc::error::TrySendError;
 use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::{watch, Notify};
 
 pub(crate) enum AppState {
     Menu,
@@ -13,6 +17,14 @@ pub(crate) enum AppState {
     Lobby { players: Vec<PlayerInfo> },
     Paused(GameView),
     Playing(GameView),
+}
+
+#[derive(Clone, Copy)]
+pub(crate) enum ConnectionState {
+    NotConnected,
+    Connecting { attempt: u32 },
+    Connected,
+    Retrying { at: Instant, attempt: u32 },
 }
 
 #[derive(Debug)]
@@ -110,15 +122,19 @@ pub(crate) struct CatanApp {
     ui: UiState,
     tx: Sender<ClientMessage>,
     rx: Receiver<ServerMessage>,
+    connection_state: watch::Receiver<ConnectionState>,
+    force_retry : Arc<Notify>
 }
 
 impl CatanApp {
-    pub(crate) fn new(tx: Sender<ClientMessage>, rx: Receiver<ServerMessage>) -> Self {
+    pub(crate) fn new(tx: Sender<ClientMessage>, rx: Receiver<ServerMessage>, connection_state : watch::Receiver<ConnectionState>, force_retry : Arc<Notify>) -> Self {
         Self {
             state: AppState::Menu,
             ui: UiState::default(),
             tx,
             rx,
+            connection_state,
+            force_retry
         }
     }
 
@@ -131,6 +147,7 @@ impl CatanApp {
             Err(TrySendError::Full(_)) => Err(AppError::SenderIsFull),
         }
     }
+
 }
 
 impl eframe::App for CatanApp {
@@ -161,7 +178,9 @@ impl eframe::App for CatanApp {
             AppState::Menu => {
                 menu::show(ui, &mut self.state, &mut messages);
             }
-            AppState::Connecting => {connecting::show(ui, &mut self.state);
+            AppState::Connecting => {
+                let conn = *self.connection_state.borrow();
+                connecting::show(ui, conn, &self.force_retry);
             }
             AppState::Lobby { players } => {
                 lobby::show(ui, &self.ui, players, &mut messages);

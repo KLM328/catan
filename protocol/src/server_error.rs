@@ -11,7 +11,9 @@ pub enum ServerError {
     GamePaused,
     InvalidToken,
     PlayerIsAlreadyConnected,
-    ServerOffline
+    ServerOffline,
+    ConnexionRefused,
+    ConnexionTimedOut
 }
 
 impl From<GameError> for ServerError {
@@ -31,6 +33,8 @@ impl Display for ServerError {
             ServerError::InvalidToken => write!(f, "Le jeton de connexion est invalide"),
             ServerError::PlayerIsAlreadyConnected => write!(f, "vous êtes déjà connecté à cette partie"),
             ServerError::ServerOffline => write!(f, "Le serveur est hors ligne"),
+            ServerError::ConnexionRefused => write!(f, "Connexion au serveur refusé"),
+            ServerError::ConnexionTimedOut => write!(f, "Connexion au serveur impossible, vérifiez votre connexion Internet")
         }
     }
 }
