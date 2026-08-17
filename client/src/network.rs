@@ -4,7 +4,7 @@ use tokio::spawn;
 use tokio::sync::mpsc::{Receiver, Sender};
 use catan_protocol::{ClientMessage, ServerError, ServerMessage};
 
-pub(crate) async fn run<A: ToSocketAddrs>(srv_addr: A, mut to_server_rx : Receiver<ClientMessage>, to_ui_tx : Sender<ServerMessage>, ctx: egui::Context, ) {
+pub(crate) async fn run<A: ToSocketAddrs>(srv_addr: A, mut to_server_rx : Receiver<ClientMessage>, to_ui_tx : Sender<ServerMessage>, ctx: egui::Context) {
 
     if let Ok(socket) = TcpStream::connect(srv_addr).await {
         let (reader, mut writer) = socket.into_split();

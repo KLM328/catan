@@ -18,6 +18,7 @@ pub(crate) enum AppState {
 #[derive(Debug)]
 enum AppError {
     SenderIsFull,
+    ServerOffline
 }
 
 pub(crate) struct UiState {
@@ -125,7 +126,7 @@ impl CatanApp {
         match self.tx.try_send(message) {
             Ok(_) => Ok(()),
             Err(TrySendError::Closed(_)) => {
-                panic!("Impossible d'envoyer les messages vers le tunel")
+                Err(AppError::ServerOffline)
             }
             Err(TrySendError::Full(_)) => Err(AppError::SenderIsFull),
         }
@@ -160,7 +161,7 @@ impl eframe::App for CatanApp {
             AppState::Menu => {
                 menu::show(ui, &mut self.state, &mut messages);
             }
-            AppState::Connecting => {connecting::show(ui);
+            AppState::Connecting => {connecting::show(ui, &mut self.state);
             }
             AppState::Lobby { players } => {
                 lobby::show(ui, &self.ui, players, &mut messages);
@@ -179,7 +180,7 @@ impl eframe::App for CatanApp {
                 Ok(_) => {
                     messages.remove(0);
                 }
-                Err(AppError::SenderIsFull) => {
+                Err(_) => {
                     break;
                 }
             }

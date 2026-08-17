@@ -110,7 +110,9 @@ pub(crate) fn apply(
         ServerMessage::Leave(player) => {
             ui_state.set_message(format!("Le joueur {} à quitté la partie", player.value()), now);
         }
-        ServerMessage::Sync(game) => *app_state = AppState::Playing(GameView::from(game)),
+        ServerMessage::Sync(game) => {
+            *app_state = AppState::Playing(GameView::from(game))
+        },
         ServerMessage::LobbyView {
             player_id : _,
             players,
