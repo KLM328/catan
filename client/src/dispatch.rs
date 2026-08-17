@@ -19,7 +19,7 @@ pub(crate) fn apply(
                 view.update_player(player);
                 view.set_status(state.status);
                 view.set_current_turn(state.current_turn);
-                ui_state.switch_buimd_mode(BuildMode::None)
+                ui_state.switch_build_mode(BuildMode::None)
 
             } else {
                 messages.push(ClientMessage::Sync)
@@ -31,7 +31,7 @@ pub(crate) fn apply(
                 view.update_player(player);
                 view.set_status(state.status);
                 view.set_current_turn(state.current_turn);
-                ui_state.switch_buimd_mode(BuildMode::None)
+                ui_state.switch_build_mode(BuildMode::None)
 
             } else {
                 messages.push(ClientMessage::Sync);
@@ -41,7 +41,7 @@ pub(crate) fn apply(
             if let AppState::Playing(view) = app_state {
                 view.set_building(vertex, Building::new(BuildingKind::City, player.id()));
                 view.update_player(player);
-                ui_state.switch_buimd_mode(BuildMode::None)
+                ui_state.switch_build_mode(BuildMode::None)
 
             } else {
                 messages.push(ClientMessage::Sync)
@@ -91,7 +91,7 @@ pub(crate) fn apply(
             if let AppState::Playing(view) = app_state {
                 view.set_status(state.status);
                 view.set_current_turn(state.current_turn);
-                ui_state.switch_buimd_mode(BuildMode::None)
+                ui_state.switch_build_mode(BuildMode::None)
             } else {
                 messages.push(ClientMessage::Sync)
             }

@@ -59,7 +59,7 @@ impl UiState {
         self.discard_selection.remove(&resource);
     }
 
-    pub(crate) fn switch_buimd_mode(&mut self, mode: BuildMode) {
+    pub(crate) fn switch_build_mode(&mut self, mode: BuildMode) {
         self.build_mode = if self.build_mode == mode {
             BuildMode::None
         } else {

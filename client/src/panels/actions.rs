@@ -24,7 +24,7 @@ pub(crate) fn show(ui : &mut Ui, game : &GameView, ui_state: &mut UiState) {
                         if action_button(ui, mode, ui_state.build_mode(), cost, ok, color).clicked()
                             && ok
                         {
-                            ui_state.switch_buimd_mode(mode);
+                            ui_state.switch_build_mode(mode);
                         }
                     }
                 });
