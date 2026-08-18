@@ -39,7 +39,7 @@ pub(crate) async fn handle(
         let games = games.lock().unwrap();
         for (&game_id, game_state) in games.iter() {
             let game_state = game_state.lock().unwrap();
-            games_info.push(GameInfo::new(game_id, game_state.game().scenario().clone(), game_state.connected_players().iter().count()))
+            games_info.push(GameInfo::new(game_id, game_state.game().scenario().clone(), game_state.connected_players().len()))
         }
         games_info.sort_by_key(|game_info| game_info.id);
         games_info
@@ -98,10 +98,7 @@ async fn join_phase(msg : ClientMessage, games : &Games, tx : Sender<ServerMessa
                         join_game(&mut game_state, token, tx.clone())
                     };
                     send(outgoing).await;
-                    match player_id {
-                        Some(player_id) => Some((game_state, player_id)),
-                         None => None
-                    }
+                    player_id.map(|player_id| (game_state, player_id))
 
                 }
                 None => {

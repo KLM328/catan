@@ -17,10 +17,7 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView, ui_state: &mut UiState) -> Vec<
         .show(ui.ctx(), |ui| {
             let required = match game.status() {
                 GameStatus::AwaitingDiscard { must_discard } => {
-                    match must_discard.iter().flatten().find(|&&(p, _)| p == game.my_id()){
-                        Some(&(_, amount)) => Some(amount),
-                        None => None,
-                    }
+                    must_discard.iter().flatten().find(|&&(p, _)| p == game.my_id()).map(|&(_, amount)| amount)
                 }
                 _ => None
             };

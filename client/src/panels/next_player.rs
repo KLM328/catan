@@ -13,13 +13,11 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView) -> Vec<ClientMessage> {
             Align2::RIGHT_TOP,
             egui::vec2(-theme::SIDE_PANEL_W - 24.0, 24.0),
         )
-        .show(ui.ctx(), |ui| if game.is_my_turn() {
-            if let GameStatus::PlayingActions = game.status()
+        .show(ui.ctx(), |ui| if game.is_my_turn() && let GameStatus::PlayingActions = game.status()
                 && end_turn_button(ui).clicked()
             {
                 actions.push(ClientMessage::EndTurn);
-            }
-        });
+            });
 
     actions
 }

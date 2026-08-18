@@ -1,4 +1,3 @@
-use std::ops::Not;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
@@ -6,7 +5,7 @@ use tokio::net::{TcpStream, ToSocketAddrs};
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::{watch, Notify};
 use tokio::time::{sleep_until, timeout, Instant};
-use catan_protocol::{ClientMessage, ServerError, ServerMessage};
+use catan_protocol::{ClientMessage, ServerMessage};
 use crate::app::ConnectionState;
 
 enum Outcome {Lost, Shutdown}
@@ -98,7 +97,7 @@ async fn session(socket : TcpStream, to_server_rx : &mut Receiver<ClientMessage>
                 let Some(msg) = msg else {break Outcome::Shutdown};
                 let mut json = serde_json::to_string(&msg).unwrap();
                 json.push('\n');
-                if writer.write_all(&json.as_bytes()).await.is_err() {
+                if writer.write_all(json.as_bytes()).await.is_err() {
                     break Outcome::Lost
                 }
             }

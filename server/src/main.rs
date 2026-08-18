@@ -3,7 +3,7 @@ mod connection;
 mod dispatch;
 
 use std::collections::HashMap;
-use catan::{Game, Scenario, GameId};
+use catan::{GameId};
 use std::sync::Arc;
 use std::sync::Mutex;
 use tokio::net::TcpListener;
@@ -17,7 +17,7 @@ type Games = Arc<Mutex<HashMap<GameId, Arc<Mutex<GameState>>>>>;
 #[tokio::main]
 async fn main() {
     let games : Games = Arc::new(Mutex::new(HashMap::new()));
-    
+
     let listener = TcpListener::bind("127.0.0.1:8888").await.unwrap();
     loop {
         let (socket, addr) = listener.accept().await.unwrap();
