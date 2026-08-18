@@ -148,5 +148,10 @@ pub(crate) fn apply(
                 messages.push(ClientMessage::Sync)
             }
         }
+        ServerMessage::GameList(games) => {
+            if let AppState::Connecting = app_state {
+                *app_state = AppState::Menu { games };
+            }
+        }
     }
 }

@@ -11,7 +11,7 @@ pub use board::{Tile, Gain, Production, Building, NumberToken, Terrain, Building
 pub use roll::{Roll};
 pub use board::{Board, InvalidBoard, InvalidAction};
 pub use player::{Player, PlayerId, PlayerColor};
-pub use game::{Game, GameStatus, GameError};
+pub use game::{Game, GameStatus, GameError, GameId};
 pub use geometry::{Hex, HexCorner, Topology, VertexId, EdgeId, TileId, ConnectedEdges, Layout};
 pub use scenario::Scenario;
 

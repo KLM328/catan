@@ -13,7 +13,8 @@ pub enum ServerError {
     PlayerIsAlreadyConnected,
     ServerOffline,
     ConnexionRefused,
-    ConnexionTimedOut
+    ConnexionTimedOut,
+    GameNotFound,
 }
 
 impl From<GameError> for ServerError {
@@ -34,7 +35,8 @@ impl Display for ServerError {
             ServerError::PlayerIsAlreadyConnected => write!(f, "vous êtes déjà connecté à cette partie"),
             ServerError::ServerOffline => write!(f, "Le serveur est hors ligne"),
             ServerError::ConnexionRefused => write!(f, "Connexion au serveur refusé"),
-            ServerError::ConnexionTimedOut => write!(f, "Connexion au serveur impossible, vérifiez votre connexion Internet")
+            ServerError::ConnexionTimedOut => write!(f, "Connexion au serveur impossible, vérifiez votre connexion Internet"),
+            ServerError::GameNotFound => write!(f, "Partie introuvable"),
         }
     }
 }

@@ -1,18 +1,17 @@
-use std::ops::Not;
 use std::sync::Arc;
 use std::time::Instant;
 use crate::panels::message;
 use crate::scenes::{connecting, lobby, playing, menu};
 use crate::{dispatch, BuildMode, GameView};
 use catan::{PlayerId, ResourceCounts, Roll};
-use catan_protocol::{ClientMessage, PlayerInfo, ServerMessage};
+use catan_protocol::{ClientMessage, GameInfo, PlayerInfo, ServerMessage};
 use eframe::egui;
 use tokio::sync::mpsc::error::TrySendError;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::{watch, Notify};
 
 pub(crate) enum AppState {
-    Menu,
+    Menu{ games : Vec<GameInfo>},
     Connecting,
     Lobby { players: Vec<PlayerInfo> },
     Paused(GameView),
@@ -129,7 +128,7 @@ pub(crate) struct CatanApp {
 impl CatanApp {
     pub(crate) fn new(tx: Sender<ClientMessage>, rx: Receiver<ServerMessage>, connection_state : watch::Receiver<ConnectionState>, force_retry : Arc<Notify>) -> Self {
         Self {
-            state: AppState::Menu,
+            state: AppState::Connecting,
             ui: UiState::default(),
             tx,
             rx,
@@ -154,6 +153,11 @@ impl eframe::App for CatanApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let mut messages = Vec::new();
 
+        if !matches!(*self.connection_state.borrow(), ConnectionState::Connected) {
+            self.state = AppState::Connecting;
+        }
+
+
         while let Ok(server_message) = self.rx.try_recv() {
             let now = ui.input(|i| i.time);
             dispatch::apply(&mut self.state, &mut self.ui, server_message, &mut messages, now);
@@ -175,7 +179,7 @@ impl eframe::App for CatanApp {
         }
 
         match &self.state {
-            AppState::Menu => {
+            AppState::Menu {games} => {
                 menu::show(ui, &mut self.state, &mut messages);
             }
             AppState::Connecting => {

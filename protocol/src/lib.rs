@@ -1,4 +1,4 @@
-use catan::{Board, EdgeId, Game, GameStatus, Hand, Player, PlayerColor, PlayerId, ResourceCounts, Roll, Scenario, TileId, VertexId};
+use catan::{Board, EdgeId, Game, GameId, GameStatus, Hand, Player, PlayerColor, PlayerId, ResourceCounts, Roll, Scenario, TileId, VertexId};
 use serde::{Deserialize, Serialize};
 
 mod server_error;
@@ -17,16 +17,33 @@ pub enum ClientMessage {
     RobberLocation(TileId),
     Roll,
     EndTurn,
-    Join {token : Option<Token>},
+    Join {token : Option<Token>, game_id : GameId},
     StartGame,
     Sync
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+pub struct GameInfo{
+    pub id : GameId,
+    pub scenario: Scenario,
+    pub connected_players : usize,
+}
+
+impl GameInfo {
+    pub fn new(id : GameId, scenario: Scenario, connected_players : usize) -> Self {
+        Self {
+            id,
+            scenario,
+            connected_players,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct PlayerInfo {
-    pub id: PlayerId,
-    pub color: PlayerColor,
-    pub hand_count: u8,
+    id: PlayerId,
+    color: PlayerColor,
+    hand_count: u8,
 }
 impl From<(&Player, PlayerId)> for PlayerInfo {
     fn from((player, id): (&Player, PlayerId)) -> Self {
@@ -122,6 +139,7 @@ pub enum ServerMessage {
     JoinGame(Token),
     PauseGame,
     ResumeGame,
+    GameList(Vec<GameInfo>),
 }
 
 impl From<(&Game, PlayerId)> for ServerMessage {
@@ -188,7 +206,7 @@ mod tests {
             ClientMessage::RobberLocation(TileId::new(4)),
             ClientMessage::Roll,
             ClientMessage::EndTurn,
-            ClientMessage::Join{token : None},
+            ClientMessage::Join{token : None, game_id : GameId::new(0)},
         ];
 
         for msg in messages {

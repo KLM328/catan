@@ -33,7 +33,7 @@ pub(crate) async fn run<A: ToSocketAddrs + Clone>(srv_addr: A, mut to_server_rx 
                 let _ = conn_tx.send(ConnectionState::Connected);
                 match session(socket, &mut to_server_rx, &to_ui_tx, &ctx).await {
                     Outcome::Shutdown => return,
-                    Outcome::Lost => return,
+                    Outcome::Lost => {},
                 }
             }
             Ok(Err(e)) => eprintln!("Connexion refusée : {e}"),

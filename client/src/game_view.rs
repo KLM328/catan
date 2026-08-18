@@ -37,7 +37,7 @@ impl GameView {
     }
 
     pub(crate) fn get_player(&self, id: PlayerId) -> Option<&PlayerInfo> {
-        self.players.iter().find(|p| p.id == id)
+        self.players.iter().find(|p| p.id() == id)
     }
 
     pub(crate) fn board(&self) -> &Board {
@@ -45,7 +45,7 @@ impl GameView {
     }
 
     pub(crate) fn score(&self, player: &PlayerInfo) -> u8 {
-        self.board.buildings().iter().flatten().filter(|&&b| b.owner() == player.id).map(|&b| b.kind().points()).sum()
+        self.board.buildings().iter().flatten().filter(|&&b| b.owner() == player.id()).map(|&b| b.kind().points()).sum()
     }
 
     pub(crate) fn status(&self) -> &GameStatus {
@@ -65,7 +65,7 @@ impl GameView {
     }
 
     pub(crate) fn update_player(&mut self, player: PlayerInfo) {
-        if let Some(p) = self.players.iter_mut().find(|p| p.id == player.id) {
+        if let Some(p) = self.players.iter_mut().find(|p| p.id() == player.id()) {
             *p = player.clone();
         }
     }

@@ -41,13 +41,17 @@ impl GameState {
         Ok(PlayerInfo::from((self.game.get_player(player_id)? , player_id)))
     }
 
-    pub(crate) fn register(&mut self, player: PlayerId, tx: Sender<ServerMessage>) -> Result<(), ServerError> {
+    pub(crate) fn register(&mut self, token: Option<Token>, tx: Sender<ServerMessage>) -> Result<(PlayerId, Token), ServerError> {
+        let (player, token) = match token {
+            None => self.new_player()?,
+            Some(token) => (self.player_by_token(token)?, token)
+        };
         if let std::collections::hash_map::Entry::Vacant(e) = self.senders.entry(player) {
             e.insert(tx);
             if self.is_paused() && self.senders.len() == self.game.players().len() {
                 self.resume();
             }
-            Ok(())
+            Ok((player, token))
         } else {
             Err(ServerError::PlayerIsAlreadyConnected)
         }
@@ -85,8 +89,8 @@ impl GameState {
         Ok((player_id, token))
     }
 
-    pub(crate) fn player_by_token(&self, token: Token) -> Option<PlayerId> {
-        self.tokens.get(&token).copied()
+    pub(crate) fn player_by_token(&self, token: Token) -> Result<PlayerId, ServerError> {
+        self.tokens.get(&token).copied().ok_or(ServerError::InvalidToken)
     }
 
     pub(crate) fn connected_players(&self) -> Vec<PlayerId> {

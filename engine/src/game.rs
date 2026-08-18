@@ -62,6 +62,17 @@ impl GameStatus {
     }
 }
 
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, Serialize, Deserialize, Ord, PartialOrd)]
+pub struct GameId {
+    id: u32,
+}
+
+impl GameId {
+    pub fn new(id: u32) -> GameId {
+        GameId { id }
+    }
+}
+
 pub struct Game {
     scenario: Scenario,
     status: GameStatus,

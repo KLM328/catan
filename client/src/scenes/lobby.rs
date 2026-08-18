@@ -7,7 +7,7 @@ pub(crate) fn show(ui: &mut egui::Ui, ui_state: &UiState, players: &Vec<PlayerIn
     grid.show(ui, |ui| {
         ui.heading("Joueurs en ligne");
         for player in players {
-            ui.label(player.id.to_string());
+            ui.label(player.id().to_string());
         }
     });
     if ui.button("Start").clicked() {
