@@ -4,6 +4,8 @@ use std::collections::HashMap;
 use tokio::sync::mpsc::Sender;
 use tokio::time::Instant;
 
+
+
 pub(crate) struct GameState {
     game: Game,
     random_board : bool,
@@ -13,10 +15,10 @@ pub(crate) struct GameState {
 }
 
 impl GameState {
-    pub(crate) fn new(game: Game, random_board : bool) -> Self {
+    pub(crate) fn new(game: Game) -> Self {
         Self {
             game,
-            random_board,
+            random_board : true,
             senders: HashMap::new(),
             paused_since: None,
             tokens: HashMap::new()

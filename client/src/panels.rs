@@ -8,4 +8,5 @@ pub(crate) mod steal;
 pub(crate) mod next_player;
 pub(crate) mod message;
 pub(crate) mod rolls;
+pub(crate) mod pause;
 

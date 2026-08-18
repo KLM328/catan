@@ -1,7 +1,7 @@
 use tokio::sync::mpsc::Sender;
 use crate::state::GameState;
 use catan::{PlayerId, Roll, Steal};
-use catan_protocol::{ClientMessage, ServerMessage};
+use catan_protocol::{ClientMessage, ClientState, ServerMessage};
 use catan_protocol::ServerError;
 
 pub(crate) fn apply(
@@ -105,11 +105,14 @@ fn build_messages(
                 return Err(ServerError::NotTheHost);
             }
         }
-
-        ClientMessage::Join { .. } => return Err(ServerError::InvalidMessageType),
-        ClientMessage::Sync => {
+        ClientMessage::Sync(ClientState::Game) => {
             messages.push((game_state.sender(player_id).unwrap(), ServerMessage::from((game_state.game(), player_id))));
         }
+        ClientMessage::Sync(ClientState::Lobby) => {todo!()}
+        ClientMessage::Sync(ClientState::Menu) => return Err(ServerError::InvalidMessageType),
+        ClientMessage::Join { .. } => return Err(ServerError::InvalidMessageType),
+        ClientMessage::CreateGame { .. } => return Err(ServerError::InvalidMessageType),
+        
     };
     Ok(messages)
 }

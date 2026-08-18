@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use catan::{Board, EdgeId, Game, GameId, GameStatus, Hand, Player, PlayerColor, PlayerId, ResourceCounts, Roll, Scenario, TileId, VertexId};
 use serde::{Deserialize, Serialize};
 
@@ -6,6 +7,13 @@ mod token;
 
 pub use server_error::ServerError;
 pub use token::Token;
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+pub enum ClientState {
+    Menu,
+    Lobby,
+    Game
+}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum ClientMessage {
@@ -19,7 +27,8 @@ pub enum ClientMessage {
     EndTurn,
     Join {token : Option<Token>, game_id : GameId},
     StartGame,
-    Sync
+    Sync(ClientState),
+    CreateGame(Scenario),
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
@@ -29,6 +38,7 @@ pub struct GameInfo{
     pub connected_players : usize,
 }
 
+
 impl GameInfo {
     pub fn new(id : GameId, scenario: Scenario, connected_players : usize) -> Self {
         Self {
@@ -36,6 +46,10 @@ impl GameInfo {
             scenario,
             connected_players,
         }
+    }
+
+    pub fn id(&self) -> GameId {
+        self.id
     }
 }
 
@@ -137,7 +151,7 @@ pub enum ServerMessage {
     StartGame(Vec<(PlayerId, Roll)>),
     Error(ServerError),
     JoinGame(Token),
-    PauseGame,
+    PauseGame(Vec<PlayerId>),
     ResumeGame,
     GameList(Vec<GameInfo>),
 }

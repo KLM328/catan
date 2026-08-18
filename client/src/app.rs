@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use std::time::Instant;
-use crate::panels::message;
+use crate::panels::{message, pause};
 use crate::scenes::{connecting, lobby, playing, menu};
 use crate::{dispatch, BuildMode, GameView};
 use catan::{PlayerId, ResourceCounts, Roll};
@@ -14,7 +14,7 @@ pub(crate) enum AppState {
     Menu{ games : Vec<GameInfo>},
     Connecting,
     Lobby { players: Vec<PlayerInfo> },
-    Paused(GameView),
+    Paused(GameView, Vec<PlayerId>),
     Playing(GameView),
 }
 
@@ -180,7 +180,7 @@ impl eframe::App for CatanApp {
 
         match &self.state {
             AppState::Menu {games} => {
-                menu::show(ui, &mut self.state, &mut messages);
+                menu::show(ui, games, &mut messages);
             }
             AppState::Connecting => {
                 let conn = *self.connection_state.borrow();
@@ -191,8 +191,9 @@ impl eframe::App for CatanApp {
             },
             AppState::Playing(view) => playing::show(ui, view, &mut self.ui, &mut messages),
 
-            AppState::Paused(_) => {
-                todo!()
+            AppState::Paused(view, missing) => {
+                playing::show(ui, view, &mut self.ui, &mut messages);
+                pause::show(ui, view, missing);
             }
         }
 

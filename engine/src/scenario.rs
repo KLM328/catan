@@ -154,14 +154,14 @@ impl Scenario {
         }
     }
 
-    pub(crate) fn max_points(&self) -> u8 {
+    pub fn max_points(&self) -> u8 {
         self.max_points
     }
 
-    pub(crate) fn min_player(&self) -> usize {
+    pub fn min_player(&self) -> usize {
         self.min_player
     }
-    pub(crate) fn max_player(&self) -> usize {
+    pub fn max_player(&self) -> usize {
         self.max_player
     }
 

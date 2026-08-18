@@ -3,7 +3,7 @@ mod game_error;
 pub use game_error::GameError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
+use std::fmt::{Display, Formatter};
 use crate::board::BuildingKind;
 use crate::{
     Board, Cost, EdgeId, Player, PlayerColor, PlayerId, ResourceCounts, Roll, Scenario,
@@ -70,6 +70,12 @@ pub struct GameId {
 impl GameId {
     pub fn new(id: u32) -> GameId {
         GameId { id }
+    }
+}
+
+impl Display for GameId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "#{}", self.id)
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::dispatch::apply;
 use crate::state::GameState;
-use catan::{PlayerId};
-use catan_protocol::{GameInfo, ServerError};
+use catan::{GameStatus, PlayerId};
+use catan_protocol::{ClientState, ServerError};
 use catan_protocol::{ClientMessage, ServerMessage, Token};
 use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader, Take};
@@ -15,12 +15,12 @@ use crate::Games;
 pub(crate) async fn handle(
     socket: TcpStream,
     addr: std::net::SocketAddr,
-    games: Games,
+    registry : Games,
 ) {
     let (reader, mut writer) = socket.into_split();
     let (tx, mut rx) = mpsc::channel::<ServerMessage>(32);
 
-    const MAX_LINE: u64 = 2048;
+    const MAX_LINE: u64 = 6144;
 
     let mut buf_reader : Take<BufReader<OwnedReadHalf>> = BufReader::new(reader).take(MAX_LINE);
     let mut line = String::new();
@@ -35,14 +35,8 @@ pub(crate) async fn handle(
         }
     });
     let games_info = {
-        let mut games_info = Vec::new();
-        let games = games.lock().unwrap();
-        for (&game_id, game_state) in games.iter() {
-            let game_state = game_state.lock().unwrap();
-            games_info.push(GameInfo::new(game_id, game_state.game().scenario().clone(), game_state.connected_players().len()))
-        }
-        games_info.sort_by_key(|game_info| game_info.id);
-        games_info
+        let registry = registry.lock().unwrap();
+        registry.games_info()
     };
     send(vec![(tx.clone(), ServerMessage::GameList(games_info))]).await;
 
@@ -57,7 +51,7 @@ pub(crate) async fn handle(
             Ok(_) => {
                 match serde_json::from_str::<ClientMessage>(&line) {
                     Ok(incoming_message) => {
-                        if let Some((game_state, player_id)) = join_phase(incoming_message, &games, tx.clone()).await {
+                        if let Some((game_state, player_id)) = join_phase(incoming_message, &registry, tx.clone()).await {
                             break (game_state, player_id);
                         } else {
                             continue
@@ -86,33 +80,49 @@ pub(crate) async fn handle(
 
 async fn join_phase(msg : ClientMessage, games : &Games, tx : Sender<ServerMessage>) -> Option<(Arc<Mutex<GameState>>, PlayerId)>{
     match msg {
-        ClientMessage::Join {token, game_id} => {
-            let game_state = {
-                let g = games.lock().unwrap();
-                g.get(&game_id).cloned()
+        ClientMessage::CreateGame(scenario) => {
+            let (_, game) = {
+                let mut registry = games.lock().unwrap();
+                registry.create(scenario)
             };
+            attach(game, None, tx).await
+        }
 
-            match game_state {
-                Some(game_state) => {
-                    let (player_id, outgoing) = {let mut game_state = game_state.lock().unwrap();
-                        join_game(&mut game_state, token, tx.clone())
-                    };
-                    send(outgoing).await;
-                    player_id.map(|player_id| (game_state, player_id))
-
-                }
+        ClientMessage::Join { token, game_id } => {
+            let game = {
+                let registry = games.lock().unwrap();
+                registry.get(&game_id)
+            };
+            match game {
+                Some(game) => attach(game, token, tx).await,
                 None => {
-                    send(vec![(tx.clone(), ServerMessage::from(ServerError::GameNotFound))]).await;
+                    let _ = tx.send(ServerError::GameNotFound.into()).await;
                     None
                 }
             }
+        }
 
+        ClientMessage::Sync(ClientState::Menu) => {
+            let games = games.lock().unwrap().games_info();
+            send(vec![(tx.clone(), ServerMessage::GameList(games))]).await;
+            None
         }
         _ => {
             send(vec![(tx.clone(), ServerMessage::from(ServerError::InvalidMessageType))]).await;
             None
         }
     }
+}
+
+async fn attach(game: Arc<Mutex<GameState>>, token: Option<Token>, tx: Sender<ServerMessage>) -> Option<(Arc<Mutex<GameState>>, PlayerId)> {
+    let (player_id, outgoing) = {
+        let mut g = game.lock().unwrap();
+        join_game(&mut g, token, tx.clone())
+    };
+    for (sender, msg) in outgoing {
+        let _ = sender.send(msg).await;
+    }
+    player_id.map(|id| (game, id))
 }
 
 async fn session(buf_reader : &mut Take<BufReader<OwnedReadHalf>>, game_state: &Arc<Mutex<GameState>>, player_id : PlayerId, tx : &Sender<ServerMessage>, addr : std::net::SocketAddr) {
@@ -155,6 +165,9 @@ fn join_game(game_state: &mut GameState, token : Option<Token>, tx : Sender<Serv
                 } else {
                     outgoing.push((game_state.sender(connected_player).unwrap(), ServerMessage::PlayerJoined(game_state.player_info(player_id).unwrap())))
                 }
+                if !(matches!(game_state.game().status(), GameStatus::Starting) || game_state.is_paused()) {
+                    outgoing.push((game_state.sender(connected_player).unwrap(), ServerMessage::ResumeGame))
+                }
             }
             (Some(player_id), outgoing)
         }
@@ -169,10 +182,11 @@ fn quit_game(game_state: &mut GameState, player_id: PlayerId) -> Vec<(Sender<Ser
     let mut outgoing = Vec::new();
     game_state.unregister(player_id);
     for player in game_state.connected_players() {
-        outgoing.push((game_state.sender(player).unwrap(), ServerMessage::Leave(player_id)))
+        outgoing.push((game_state.sender(player).unwrap(), ServerMessage::Leave(player_id)));
+        if game_state.is_paused() {
+            outgoing.push((game_state.sender(player).unwrap(), ServerMessage::PauseGame(game_state.game().players().keys().copied().filter(|id| !game_state.connected_players().contains(id)).collect())))
+        }
     }
-
-
     outgoing
 }
 
