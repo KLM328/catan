@@ -6,18 +6,22 @@ mod game_view;
 mod scenes;
 mod dispatch;
 mod network;
+mod ui_state;
+mod connection_state;
 
 use std::sync::Arc;
 pub(crate) use theme::{player_color, resource_color, terrain_color};
-pub(crate) use widgets::{action_button, disc_button, draw_die, end_turn_button, player_row, player_disc, card, badge};
+pub(crate) use widgets::{action_button, disc_button, draw_die, end_turn_button, player_row, player_disc, card, badge, absent_disc};
 pub(crate) use panels::board::BuildMode;
 pub(crate) use game_view::GameView;
+pub(crate) use ui_state::UiState;
+pub(crate) use app::{CatanApp, AppState};
+pub(crate) use connection_state::ConnectionState;
 
 
 use eframe::egui::{self};
 use tokio::sync::{mpsc, watch, Notify};
 use catan_protocol::{ClientMessage, ServerMessage};
-use crate::app::{CatanApp, UiState, AppState, ConnectionState};
 
 
 

@@ -1,5 +1,5 @@
 use crate::AppState;
-use crate::app::UiState;
+use crate::UiState;
 use crate::game_view::GameView;
 use catan::{Building, BuildingKind};
 use catan_protocol::{ClientMessage, ClientState, ServerMessage};

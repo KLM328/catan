@@ -2,7 +2,7 @@ use eframe::egui;
 use eframe::egui::{Align2, Ui};
 use catan::{Cost, GameStatus};
 use crate::{action_button, player_color, theme, BuildMode};
-use crate::app::UiState;
+use crate::UiState;
 use crate::game_view::GameView;
 
 pub(crate) fn show(ui : &mut Ui, game : &GameView, ui_state: &mut UiState) {

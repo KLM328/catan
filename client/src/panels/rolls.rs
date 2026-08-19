@@ -1,7 +1,7 @@
 use std::time::Duration;
 use egui::{Align2, Color32, FontId, Stroke, Ui};
 use catan_protocol::PlayerInfo;
-use crate::app::UiState;
+use crate::UiState;
 use crate::theme;
 use crate::widgets::{draw_die, player_disc};
 

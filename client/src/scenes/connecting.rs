@@ -1,4 +1,4 @@
-use crate::app::{ConnectionState};
+use crate::{ConnectionState};
 use egui::{FontId, RichText, Ui};
 use std::time::Duration;
 use tokio::sync::Notify;

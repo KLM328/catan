@@ -1,5 +1,5 @@
 use catan_protocol::{ClientMessage, PlayerInfo};
-use crate::app::UiState;
+use crate::UiState;
 use crate::panels::{message, rolls};
 
 pub(crate) fn show(ui: &mut egui::Ui, ui_state: &UiState, players: &Vec<PlayerInfo>, messages: &mut Vec<ClientMessage>) {

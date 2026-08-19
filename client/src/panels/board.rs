@@ -4,7 +4,7 @@ use catan::{BuildingKind, EdgeId, GameStatus, Layout, TileId, VertexId};
 use eframe::egui;
 use eframe::egui::{Align2, Color32, FontId, Pos2, Sense, Shape, Stroke, Ui};
 use catan_protocol::ClientMessage;
-use crate::app::UiState;
+use crate::UiState;
 use crate::game_view::GameView;
 
 #[derive(PartialEq, Clone, Copy)]

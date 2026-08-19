@@ -1,12 +1,15 @@
 use crate::game_view::GameView;
-use crate::{player_color, player_disc};
-use catan::{PlayerColor, PlayerId};
-use eframe::egui::{self, Color32, FontId, RichText, Sense, Stroke, Ui};
-
-const DISC_W: f32 = 76.0;
-const GAP: f32 = 12.0;
+use crate::{player_color, absent_disc};
+use catan::{PlayerColor};
+use eframe::egui::{self, Color32, RichText, Stroke, Ui};
+use crate::theme::{DISC_RADIUS, GAP};
 
 pub(crate) fn show(ui: &mut Ui, game: &GameView) {
+
+    if game.missing_players().is_empty() {
+        return
+    }
+
     let frame = egui::Frame::popup(ui.style())
         .fill(Color32::from_rgba_unmultiplied(18, 16, 14, 205))
         .stroke(Stroke::new(1.0, Color32::from_gray(75)))
@@ -16,9 +19,9 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView) {
     egui::Modal::new(egui::Id::new("pause"))
         .backdrop_color(Color32::from_black_alpha(55))
         .frame(frame)
-        .show(ui.ctx(), |ui| if !game.missing_players().is_empty() {
+        .show(ui.ctx(), |ui| {
             let n = game.missing_players().len() as f32;
-            let total = (n * DISC_W + (n - 1.0).max(0.0) * GAP).max(300.0);
+            let total = (n * DISC_RADIUS + (n - 1.0).max(0.0) * GAP).max(300.0);
             ui.set_width(total);
 
             ui.vertical_centered(|ui| {
@@ -39,7 +42,7 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView) {
 
                 ui.horizontal(|ui| {
                     ui.spacing_mut().item_spacing.x = GAP;
-                    let row = n * DISC_W + (n - 1.0).max(0.0) * GAP;
+                    let row = n * (DISC_RADIUS*2.6) + (n - 1.0).max(0.0) * GAP;
                     ui.add_space(((ui.available_width() - row) * 0.5).max(0.0));
                     for &id in game.missing_players() {
                         if let Some(player) = game.get_player(id) {
@@ -58,24 +61,4 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView) {
                 );
             });
         });
-}
-
-fn absent_disc(ui: &mut Ui, color: Color32, name: &str) {
-    let (rect, _) = ui.allocate_exact_size(egui::vec2(DISC_W, 64.0), Sense::hover());
-    let painter = ui.painter_at(rect);
-    let center = egui::pos2(rect.center().x, rect.top() + 24.0);
-
-    // Respiration lente : 0.25 → 0.6 d'opacité.
-    let t = ui.input(|i| i.time) as f32;
-    let pulse = 0.25 + 0.35 * (0.5 + 0.5 * (t * 1.8).sin());
-
-    player_disc(&painter, center, 20.0, color.gamma_multiply(pulse));
-
-    painter.text(
-        egui::pos2(rect.center().x, rect.top() + 54.0),
-        egui::Align2::CENTER_CENTER,
-        name,
-        FontId::proportional(13.0),
-        ui.visuals().weak_text_color(),
-    );
 }

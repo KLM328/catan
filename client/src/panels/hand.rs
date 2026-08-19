@@ -3,7 +3,7 @@ use catan::{GameStatus, Resource, ResourceCounts};
 use eframe::egui::Ui;
 use egui::{Align2, Color32, Sense, Stroke};
 use catan_protocol::ClientMessage;
-use crate::app::UiState;
+use crate::UiState;
 use crate::game_view::GameView;
 use crate::{player_color, resource_color};
 use crate::{badge, card};

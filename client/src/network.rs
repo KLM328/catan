@@ -6,7 +6,7 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::{watch, Notify};
 use tokio::time::{sleep_until, timeout, Instant};
 use catan_protocol::{ClientMessage, ServerMessage};
-use crate::app::ConnectionState;
+use crate::ConnectionState;
 
 enum Outcome {Lost, Shutdown}
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
