@@ -6,7 +6,7 @@ use eframe::egui::{self, Color32, FontId, RichText, Sense, Stroke, Ui};
 const DISC_W: f32 = 76.0;
 const GAP: f32 = 12.0;
 
-pub(crate) fn show(ui: &mut Ui, game: &GameView, missing: &[PlayerId]) {
+pub(crate) fn show(ui: &mut Ui, game: &GameView) {
     let frame = egui::Frame::popup(ui.style())
         .fill(Color32::from_rgba_unmultiplied(18, 16, 14, 205))
         .stroke(Stroke::new(1.0, Color32::from_gray(75)))
@@ -16,8 +16,8 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView, missing: &[PlayerId]) {
     egui::Modal::new(egui::Id::new("pause"))
         .backdrop_color(Color32::from_black_alpha(55))
         .frame(frame)
-        .show(ui.ctx(), |ui| {
-            let n = missing.len() as f32;
+        .show(ui.ctx(), |ui| if !game.missing_players().is_empty() {
+            let n = game.missing_players().len() as f32;
             let total = (n * DISC_W + (n - 1.0).max(0.0) * GAP).max(300.0);
             ui.set_width(total);
 
@@ -27,7 +27,7 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView, missing: &[PlayerId]) {
                 ui.label(RichText::new("Partie en pause").size(28.0));
                 ui.add_space(2.0);
                 ui.label(
-                    RichText::new(if missing.len() > 1 {
+                    RichText::new(if game.missing_players().len() > 1 {
                         "Ces joueurs sont déconnectés"
                     } else {
                         "Ce joueur est déconnecté"
@@ -41,7 +41,7 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView, missing: &[PlayerId]) {
                     ui.spacing_mut().item_spacing.x = GAP;
                     let row = n * DISC_W + (n - 1.0).max(0.0) * GAP;
                     ui.add_space(((ui.available_width() - row) * 0.5).max(0.0));
-                    for &id in missing {
+                    for &id in game.missing_players() {
                         if let Some(player) = game.get_player(id) {
                             absent_disc(ui, player_color(player), PlayerColor::color_name(player.color()));
                         }
@@ -50,7 +50,7 @@ pub(crate) fn show(ui: &mut Ui, game: &GameView, missing: &[PlayerId]) {
 
                 ui.add_space(18.0);
                 ui.label(
-                    RichText::new(if missing.len() > 1 {
+                    RichText::new(if game.missing_players().len() > 1 {
                         "La partie reprendra automatiquement à leur retour."
                     } else {
                         "La partie reprendra automatiquement à son retour."

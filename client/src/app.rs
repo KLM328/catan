@@ -14,7 +14,6 @@ pub(crate) enum AppState {
     Menu{ games : Vec<GameInfo>},
     Connecting,
     Lobby { players: Vec<PlayerInfo> },
-    Paused(GameView, Vec<PlayerId>),
     Playing(GameView),
 }
 
@@ -190,11 +189,7 @@ impl eframe::App for CatanApp {
                 lobby::show(ui, &self.ui, players, &mut messages);
             },
             AppState::Playing(view) => playing::show(ui, view, &mut self.ui, &mut messages),
-
-            AppState::Paused(view, missing) => {
-                playing::show(ui, view, &mut self.ui, &mut messages);
-                pause::show(ui, view, missing);
-            }
+            
         }
 
         message::show(ui, &self.ui);

@@ -10,6 +10,7 @@ pub(crate) struct GameView {
     status: GameStatus,
     turn_order: Vec<PlayerId>,
     current_turn: usize,
+    missing_players: Vec<PlayerId>,
 }
 
 impl From<GameSnapshot> for GameView {
@@ -22,6 +23,7 @@ impl From<GameSnapshot> for GameView {
             status: value.game_status,
             turn_order: value.turn_order,
             current_turn: value.current_turn,
+            missing_players : Vec::new(),
         }
     }
 }
@@ -101,5 +103,14 @@ impl GameView {
     pub(crate) fn set_hand(&mut self, hand : Hand){
         self.my_hand = hand;
     }
+
+    pub(crate) fn missing_players(&self) -> &[PlayerId] {
+        &self.missing_players
+    }
+
+    pub(crate) fn missing_players_mut(&mut self) -> &mut Vec<PlayerId> {
+        &mut self.missing_players
+    }
+
 
 }

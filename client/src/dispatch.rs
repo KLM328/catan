@@ -128,15 +128,15 @@ pub(crate) fn apply(
         }
         ServerMessage::JoinGame(_) => {}
         ServerMessage::PauseGame(missing) => {
-            if let AppState::Playing(view) | AppState::Paused(view, ..) = app_state {
-                *app_state = AppState::Paused(view.clone(), missing)
+            if let AppState::Playing(view) = app_state {
+                *view.missing_players_mut() = missing
             } else {
                 messages.push(ClientMessage::Sync(ClientState::Game))
             }
         }
         ServerMessage::ResumeGame => {
-            if let AppState::Paused(view, ..) = app_state {
-                *app_state = AppState::Playing(view.clone())
+            if let AppState::Playing(view) = app_state {
+                view.missing_players_mut().clear()
             } else {
                 messages.push(ClientMessage::Sync(ClientState::Game))
             }
